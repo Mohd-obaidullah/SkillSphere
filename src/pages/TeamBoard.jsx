@@ -398,49 +398,6 @@ export default function TeamBoard() {
  </div>
  )}
 
- {showTimerSettings && (
- <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
- <div className="bg-white p-6 rounded-2xl w-full max-w-md">
- <h3 className="font-bold text-xl mb-4">Timer Settings</h3>
- <form onSubmit={async (e) => {
-     e.preventDefault();
-     setTimerOn(false);
-     setTimerMode('focus');
-     setTimeLeft(timerSettings.focus * 60);
-     setShowTimerSettings(false);
-     try {
-         const { profileAPI } = await import('../services/api');
-         await profileAPI.updateProfile({ timer_settings: timerSettings });
-     } catch (err) {
-         console.error('Failed to save settings:', err);
-     }
- }} className="flex flex-col gap-3">
- <div className="grid grid-cols-2 gap-4">
- <div className="form-group mb-0">
- <label>Focus (minutes)</label>
- <input type="number" min="1" max="120" required className="form-control" value={timerSettings.focus} onChange={e=>setTimerSettings({...timerSettings, focus: Number(e.target.value)})} />
- </div>
- <div className="form-group mb-0">
- <label>Short Break</label>
- <input type="number" min="1" max="30" required className="form-control" value={timerSettings.shortBreak} onChange={e=>setTimerSettings({...timerSettings, shortBreak: Number(e.target.value)})} />
- </div>
- <div className="form-group mb-0">
- <label>Long Break</label>
- <input type="number" min="1" max="60" required className="form-control" value={timerSettings.longBreak} onChange={e=>setTimerSettings({...timerSettings, longBreak: Number(e.target.value)})} />
- </div>
- <div className="form-group mb-0">
- <label>Sessions until long break</label>
- <input type="number" min="1" max="10" required className="form-control" value={timerSettings.sessionsBeforeLong} onChange={e=>setTimerSettings({...timerSettings, sessionsBeforeLong: Number(e.target.value)})} />
- </div>
- </div>
- <div className="flex justify-end gap-2 mt-4">
- <button type="button" className="btn-secondary" onClick={() => setShowTimerSettings(false)}>Cancel</button>
- <button type="submit" className="btn-primary">Save & Reset</button>
- </div>
- </form>
- </div>
- </div>
- )}
  </div>
  );
 }
