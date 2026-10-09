@@ -102,6 +102,27 @@ def delete_project(proj_id):
         
     return jsonify({"msg": "Project deleted successfully"}), 200
 
+@projects_bp.route('/<proj_id>', methods=['PUT'])
+@jwt_required()
+def update_project(proj_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    proj = db.projects.find_one({"_id": ObjectId(proj_id)})
+    if not proj: return jsonify({"msg": "Project not found"}), 404
+    
+    # Authorized members can update progress
+    if ObjectId(user_id) not in proj.get('members', []):
+        return jsonify({"msg": "Not authorized to update this project"}), 403
+        
+    update = {}
+    if 'status' in data: update['status'] = data['status']
+    if 'progress_notes' in data: update['progress_notes'] = data['progress_notes']
+    
+    db.projects.update_one({"_id": ObjectId(proj_id)}, {"$set": update})
+    return jsonify({"msg": "Project updated"}), 200
+
 @projects_bp.route('/<proj_id>/apply', methods=['POST'])
 @jwt_required()
 def apply_project(proj_id):

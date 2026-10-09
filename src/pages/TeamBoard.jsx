@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { projectsAPI } from '../services/api';
+import { projectsAPI, roomsAPI } from '../services/api';
 import { Plus, Users, MessageSquare } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
@@ -22,10 +22,15 @@ export default function TeamBoard() {
  const [activeProject, setActiveProject] = useState(null);
  const [tasks, setTasks] = useState([]);
  const [applications, setApplications] = useState([]);
+ const [activeTab, setActiveTab] = useState('board'); // overview, board, discussion
+ const [questions, setQuestions] = useState([]);
+ const [newQuestion, setNewQuestion] = useState('');
  
  const [showModal, setShowModal] = useState(false);
  const [tTitle, setTTitle] = useState('');
  const [tTag, setTTag] = useState('');
+ const [progressNotes, setProgressNotes] = useState('');
+ const [projectStatus, setProjectStatus] = useState('');
 
  // Timer logic
  useEffect(() => {
@@ -67,10 +72,19 @@ export default function TeamBoard() {
  const urlProject = searchParams.get('project');
  if (urlProject) {
      const found = myProjects.find(p => p._id === urlProject);
-     if (found) setActiveProject(found);
-     else if (myProjects.length > 0) setActiveProject(myProjects[0]);
+     if (found) {
+         setActiveProject(found);
+         setProjectStatus(found.status || '');
+         setProgressNotes(found.progress_notes || '');
+     } else if (myProjects.length > 0) {
+         setActiveProject(myProjects[0]);
+         setProjectStatus(myProjects[0].status || '');
+         setProgressNotes(myProjects[0].progress_notes || '');
+     }
  } else if (myProjects.length > 0) {
      setActiveProject(myProjects[0]);
+     setProjectStatus(myProjects[0].status || '');
+     setProgressNotes(myProjects[0].progress_notes || '');
  }
  });
  }, [myId, searchParams]);
@@ -161,6 +175,49 @@ export default function TeamBoard() {
  }
  };
 
+ const handleUpdateProgress = async (e) => {
+ e.preventDefault();
+ if (!activeProject) return;
+ try {
+     await projectsAPI.updateProject(activeProject._id, {
+         status: projectStatus,
+         progress_notes: progressNotes
+     });
+     alert("Project progress updated successfully!");
+ } catch (err) {
+     alert("Failed to update progress.");
+ }
+ };
+
+ const fetchRoomQuestions = async () => {
+ if (activeProject?.room_id) {
+     try {
+         const res = await roomsAPI.getQuestions(activeProject.room_id);
+         setQuestions(res.data);
+     } catch (e) {
+         console.error(e);
+     }
+ }
+ };
+
+ useEffect(() => {
+ if (activeTab === 'discussion') {
+     fetchRoomQuestions();
+ }
+ }, [activeTab, activeProject]);
+
+ const handleAsk = async (e) => {
+ e.preventDefault();
+ if (!newQuestion.trim() || !activeProject?.room_id) return;
+ try {
+ await roomsAPI.createQuestion(activeProject.room_id, { title: newQuestion });
+ setNewQuestion('');
+ fetchRoomQuestions();
+ } catch (err) {
+ alert("Failed to post question");
+ }
+ };
+
  const cols = { todo: [], 'in-progress': [], done: [] };
  tasks.forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
 
@@ -173,11 +230,6 @@ export default function TeamBoard() {
  </div>
  
  <div className="flex gap-4 items-center">
- {activeProject?.room_id && (
-    <a href={`/study-notes?room=${activeProject.room_id}`} className="btn-secondary whitespace-nowrap text-sm py-1.5 px-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200 flex items-center gap-2">
-      <MessageSquare size={16} /> Discussions & Resources
-    </a>
- )}
  {projects.length > 0 && (
  <select 
  className="form-control mb-0 w-auto min-w-[200px]"
@@ -192,6 +244,17 @@ export default function TeamBoard() {
  )}
  </div>
  </div>
+
+ {activeProject && (
+ <div className="flex gap-4 mb-6 border-b border-[rgba(210,200,185,0.5)] pb-2">
+    <button onClick={() => setActiveTab('overview')} className={`text-sm font-bold ${activeTab === 'overview' ? 'text-[#C85A32] border-b-2 border-[#C85A32]' : 'text-gray-500 hover:text-gray-700'}`}>Overview & Progress</button>
+    <button onClick={() => setActiveTab('board')} className={`text-sm font-bold ${activeTab === 'board' ? 'text-[#C85A32] border-b-2 border-[#C85A32]' : 'text-gray-500 hover:text-gray-700'}`}>Task Board</button>
+    <button onClick={() => setActiveTab('discussion')} className={`text-sm font-bold flex items-center gap-1 ${activeTab === 'discussion' ? 'text-[#C85A32] border-b-2 border-[#C85A32]' : 'text-gray-500 hover:text-gray-700'}`} disabled={!activeProject.room_id} title={!activeProject.room_id ? 'Room unlocks when a member joins' : ''}>
+        Discussion
+        {!activeProject.room_id && <span className="text-[10px] bg-gray-200 text-gray-500 px-1 rounded-full ml-1">Locked</span>}
+    </button>
+ </div>
+ )}
 
  <div className="glass-card mb-8 text-center max-w-sm mx-auto relative">
  <button 
@@ -213,6 +276,68 @@ export default function TeamBoard() {
  {projects.length === 0 ? (
  <div className="text-center py-12 text-gray-500">You are not a member of any projects yet.</div>
  ) : (
+ <>
+ {activeTab === 'overview' && activeProject && (
+    <div className="glass-card mb-8">
+        <h3 className="font-bold text-xl mb-4">{activeProject.title}</h3>
+        <p className="text-gray-600 mb-6 whitespace-pre-wrap">{activeProject.description}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t pt-6">
+            <div>
+                <h4 className="font-bold text-sm text-gray-500 uppercase tracking-wider mb-4">Required Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                    {(activeProject.requiredRoles || []).map(r => <span key={r} className="tag border-[#C85A32] text-[#C85A32] text-xs">{r}</span>)}
+                    {(activeProject.tags || []).map(t => <span key={t} className="tag text-xs">{t}</span>)}
+                </div>
+            </div>
+            <div>
+                <h4 className="font-bold text-sm text-gray-500 uppercase tracking-wider mb-4">Team Members</h4>
+                <div className="flex flex-col gap-3">
+                    {activeProject.members.map(m => (
+                        <div key={m._id} className="flex items-center gap-3">
+                            <img src={m.avatar || 'https://via.placeholder.com/150'} className="w-8 h-8 rounded-full border border-gray-200" alt={m.name} />
+                            <div>
+                                <h5 className="font-bold text-sm leading-tight">{m.name}</h5>
+                                {m._id === activeProject.owner_id && <span className="text-[10px] text-[#C85A32] font-bold">Project Owner</span>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+        
+        <div className="mt-8 pt-6 border-t border-[rgba(210,200,185,0.5)]">
+            <h4 className="font-bold text-sm text-gray-500 uppercase tracking-wider mb-4">Project Progress</h4>
+            <form onSubmit={handleUpdateProgress} className="flex flex-col gap-4 max-w-2xl">
+                <div>
+                    <label className="block text-xs font-bold mb-1">Status</label>
+                    <select className="form-control mb-0 w-full md:w-1/2" value={projectStatus} onChange={e => setProjectStatus(e.target.value)}>
+                        <option value="Actively Recruiting">Actively Recruiting</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Testing">Testing</option>
+                        <option value="Completed">Completed</option>
+                        <option value="On Hold">On Hold</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-xs font-bold mb-1">Progress Notes</label>
+                    <textarea 
+                        className="form-control mb-0 w-full" 
+                        rows="3" 
+                        placeholder="What's the latest update on this project?"
+                        value={progressNotes}
+                        onChange={e => setProgressNotes(e.target.value)}
+                    ></textarea>
+                </div>
+                <div>
+                    <button type="submit" className="btn-primary">Save Progress</button>
+                </div>
+            </form>
+        </div>
+    </div>
+ )}
+ 
+ {activeTab === 'board' && (
  <>
  <div className="flex justify-end mb-4">
  <button className="btn-primary flex items-center gap-2 text-sm" onClick={() => setShowModal(true)}>
@@ -242,6 +367,31 @@ export default function TeamBoard() {
  </div>
  ))}
  </div>
+ </>
+ )}
+
+ {activeTab === 'discussion' && activeProject?.room_id && (
+    <div className="glass-card mb-8">
+        <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><MessageSquare size={18} /> Team Discussion</h3>
+        <form onSubmit={handleAsk} className="flex gap-2 mb-6">
+            <input type="text" className="form-control mb-0" placeholder="Post a message to the team..." value={newQuestion} onChange={e=>setNewQuestion(e.target.value)} />
+            <button type="submit" className="btn-primary whitespace-nowrap">Send</button>
+        </form>
+        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+            {questions.length === 0 ? <p className="text-gray-500 text-sm">No discussions yet. Say hi to your team!</p> : null}
+            {questions.map(q => (
+                <div key={q._id} className="p-4 border rounded-xl bg-white/70 border-[rgba(210,200,185,0.5)] shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <img src={q.author?.avatar || 'https://via.placeholder.com/150'} className="w-6 h-6 rounded-full border border-gray-200" alt="" />
+                        <span className="font-bold text-sm">{q.author?.name || 'Unknown'}</span>
+                    </div>
+                    <h4 className="font-bold text-md mb-1">{q.title}</h4>
+                    {q.content && <p className="text-sm text-gray-700 whitespace-pre-wrap">{q.content}</p>}
+                </div>
+            ))}
+        </div>
+    </div>
+ )}
  {activeProject?.owner_id === myId && applications.length > 0 && (
   <div className="mt-8 mb-8">
   <h3 className="font-heading text-2xl font-bold mb-4">Project Applications</h3>

@@ -78,6 +78,7 @@ export const swapsAPI = {
 export const projectsAPI = {
  getProjects: (search) => api.get(`/projects/?q=${search || ''}`),
  createProject: (data) => api.post('/projects/', data),
+ updateProject: (projectId, data) => api.put(`/projects/${projectId}`, data),
  deleteProject: (projectId) => api.delete(`/projects/${projectId}`),
  applyProject: (projectId) => api.post(`/projects/${projectId}/apply`),
  getProjectApplications: (projectId) => api.get(`/projects/${projectId}/applications`),
