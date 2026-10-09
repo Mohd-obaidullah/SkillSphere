@@ -189,6 +189,37 @@ def get_swaps():
             
     return jsonify(result), 200
 
+@swaps_bp.route('/<swap_id>', methods=['GET'])
+@jwt_required()
+def get_swap(swap_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    s = db.skill_swaps.find_one({"_id": ObjectId(swap_id)})
+    if not s: return jsonify({"msg": "Swap not found"}), 404
+    if str(s['requester_id']) != user_id and str(s['target_id']) != user_id:
+        return jsonify({"msg": "Unauthorized"}), 403
+        
+    other_id = s["target_id"] if str(s["requester_id"]) == user_id else s["requester_id"]
+    other_user = db.users.find_one({"_id": other_id}, {"password": 0})
+    if other_user:
+        other_user["_id"] = str(other_user["_id"])
+        
+    s_data = {
+        "_id": str(s["_id"]),
+        "partner": other_user,
+        "role": "requester" if str(s["requester_id"]) == user_id else "target",
+        "skills_offered": s.get('skills_offered', []),
+        "skills_wanted": s.get('skills_wanted', []),
+        "message": s.get('message', ''),
+        "status": s.get('status'),
+        "milestones": s.get('milestones', []),
+        "sessions": s.get('sessions', []),
+        "created_at": s.get("created_at"),
+        "updated_at": s.get("updated_at")
+    }
+    return jsonify(s_data), 200
+
 @swaps_bp.route('/<swap_id>/sessions', methods=['POST'])
 @jwt_required()
 def add_session(swap_id):

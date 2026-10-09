@@ -70,6 +70,7 @@ export const swapsAPI = {
  acceptRequest: (reqId) => api.post(`/swaps/request/${reqId}/accept`),
  rejectRequest: (reqId) => api.post(`/swaps/request/${reqId}/reject`),
  getSwaps: () => api.get('/swaps/'),
+ getSwap: (swapId) => api.get(`/swaps/${swapId}`),
  addSession: (swapId, data) => api.post(`/swaps/${swapId}/sessions`, data),
  completeSwap: (swapId) => api.post(`/swaps/${swapId}/complete`)
 };

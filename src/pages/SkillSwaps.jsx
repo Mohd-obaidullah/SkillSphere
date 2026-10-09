@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { peersAPI, swapsAPI } from '../services/api';
 import { useAppContext } from '../context/AppContext';
-import { Search, UserPlus, BookOpen, Check, X, MessageSquare, Plus } from 'lucide-react';
+import { Search, UserPlus, BookOpen, Check, X, MessageSquare, Plus, Send } from 'lucide-react';
 
 export default function SkillSwaps() {
   const { state } = useAppContext();
@@ -29,6 +29,8 @@ export default function SkillSwaps() {
   // Active Swap Modal
   const [activeSwap, setActiveSwap] = useState(null);
   const [sessionNotes, setSessionNotes] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const chatContainerRef = React.useRef(null);
 
   const showToast = (msg, type='info') => {
     setToast({ msg, type });
@@ -114,22 +116,56 @@ export default function SkillSwaps() {
     }
   };
   
+  // Polling for active swap
+  useEffect(() => {
+    let intervalId;
+    if (activeSwap) {
+      const fetchSwap = async () => {
+        try {
+          const res = await swapsAPI.getSwap(activeSwap._id);
+          setActiveSwap(res.data);
+        } catch (e) {
+          console.error("Failed to fetch swap updates");
+        }
+      };
+      
+      intervalId = setInterval(fetchSwap, 4000);
+      
+      const handleVisibilityChange = () => {
+          if (document.visibilityState === 'visible') fetchSwap();
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      
+      return () => {
+          clearInterval(intervalId);
+          document.removeEventListener("visibilitychange", handleVisibilityChange);
+      };
+    }
+  }, [activeSwap?._id]);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [activeSwap?.sessions]);
+
   const handleAddSession = async (e) => {
-      e.preventDefault();
-      if (!sessionNotes.trim()) return;
+      e?.preventDefault();
+      if (!sessionNotes.trim() || isSending) return;
+      setIsSending(true);
       try {
-          await swapsAPI.addSession(activeSwap._id, { notes: sessionNotes });
+          const res = await swapsAPI.addSession(activeSwap._id, { notes: sessionNotes });
           setSessionNotes('');
-          showToast('Session logged!', 'success');
+          // Update local activeSwap state immediately
+          setActiveSwap(prev => ({
+              ...prev,
+              sessions: [...(prev.sessions || []), res.data]
+          }));
           fetchData();
-          // Update local activeSwap state to show new session
-          const updatedSwap = swaps.find(s => s._id === activeSwap._id);
-          if (updatedSwap) {
-              const newSession = { id: Date.now(), notes: sessionNotes, created_by: currentUser._id, date: new Date().toISOString() };
-              setActiveSwap({...activeSwap, sessions: [...activeSwap.sessions, newSession]});
-          }
       } catch (e) {
-          showToast('Failed to add session', 'error');
+          showToast('Failed to send message', 'error');
+      } finally {
+          setIsSending(false);
       }
   };
   
@@ -500,7 +536,7 @@ export default function SkillSwaps() {
                       <div className="md:col-span-2 flex flex-col">
                           <h4 className="font-bold text-xl mb-4 flex items-center gap-2"><MessageSquare size={20}/> Learning Log</h4>
                           
-                          <div className="flex-1 bg-gray-50 border rounded-xl p-4 mb-4 overflow-y-auto space-y-4 max-h-[40vh]">
+                          <div ref={chatContainerRef} className="flex-1 bg-gray-50 border rounded-xl p-4 mb-4 overflow-y-auto space-y-4 max-h-[40vh]">
                               {activeSwap.sessions?.length === 0 ? (
                                   <div className="text-center text-gray-500 my-8">
                                       <p>No sessions logged yet.</p>
@@ -525,12 +561,21 @@ export default function SkillSwaps() {
                           <form onSubmit={handleAddSession} className="flex gap-2">
                               <textarea 
                                   className="form-control mb-0 resize-none" 
-                                  placeholder="Log what you learned or taught today..."
+                                  placeholder="Type your message..."
                                   value={sessionNotes}
                                   onChange={e => setSessionNotes(e.target.value)}
+                                  onKeyDown={e => {
+                                      if (e.key === 'Enter' && !e.shiftKey) {
+                                          e.preventDefault();
+                                          handleAddSession(e);
+                                      }
+                                  }}
                                   rows={2}
+                                  disabled={isSending}
                               ></textarea>
-                              <button type="submit" className="btn-primary self-end flex items-center gap-2 whitespace-nowrap"><Plus size={16}/> Log</button>
+                              <button type="submit" className="btn-primary self-end flex items-center gap-2 whitespace-nowrap" disabled={isSending || !sessionNotes.trim()}>
+                                  <Send size={16}/> Send
+                              </button>
                           </form>
                       </div>
                   </div>
