@@ -95,7 +95,7 @@ export default function Dashboard() {
  </div>
  </div>
 
- <div className="grid grid-cols-[2fr_1fr] gap-7">
+ <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-7">
  <div className="flex flex-col gap-6">
  <div className="glass-card">
  <div className="flex items-center justify-between mb-5">

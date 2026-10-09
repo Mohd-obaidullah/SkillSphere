@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { notificationsAPI } from '../services/api';
-import { Home, Users, ArrowLeftRight, BookOpen, Calendar, Award, KanbanSquare, User, Settings, Bell, Search, LogOut } from 'lucide-react';
+import { Home, Users, ArrowLeftRight, BookOpen, Calendar, Award, KanbanSquare, User, Settings, Bell, Search, LogOut, Menu, X } from 'lucide-react';
 
 export default function MainLayout() {
  const { state, saveState, logout, addNotification } = useAppContext();
@@ -10,6 +10,7 @@ export default function MainLayout() {
  const u = state.currentUser;
  const [showNotifs, setShowNotifs] = React.useState(false);
  const [dbNotifications, setDbNotifications] = React.useState([]);
+ const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
  React.useEffect(() => {
    const fetchNotifs = async () => {
@@ -65,16 +66,29 @@ export default function MainLayout() {
 
  return (
  <div className="flex min-h-screen">
+ 
+ {mobileMenuOpen && (
+   <div 
+     className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+     onClick={() => setMobileMenuOpen(false)}
+   />
+ )}
+
  {/* Sidebar */}
- <aside className="w-[270px] bg-white/80 backdrop-blur-md border-r border-[rgba(210,200,185,0.5)] p-6 flex flex-col fixed h-screen z-50">
- <div className="flex items-center gap-3 pb-6 border-b border-[rgba(210,200,185,0.5)] mb-6">
- <div className="w-10 h-10 bg-gradient-to-br from-[#C85A32] to-[#6B46C1] rounded-xl flex items-center justify-center shadow-lg">
+ <aside className={`w-[270px] bg-white/95 lg:bg-white/80 backdrop-blur-md border-r border-[rgba(210,200,185,0.5)] p-6 flex flex-col fixed h-screen z-50 transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+ <div className="flex items-center justify-between pb-6 border-b border-[rgba(210,200,185,0.5)] mb-6">
+ <div className="flex items-center gap-3">
+ <div className="w-10 h-10 bg-gradient-to-br from-[#C85A32] to-[#6B46C1] rounded-xl flex items-center justify-center shadow-lg shrink-0">
  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="w-6 h-6"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
  </div>
  <div>
  <h1 className="font-heading text-xl font-extrabold bg-gradient-to-br from-[#C85A32] to-[#6B46C1] text-transparent bg-clip-text leading-tight">SKILLSPHERE</h1>
  <span className="text-[0.7rem] text-gray-500 uppercase font-semibold tracking-wider">Student Network</span>
  </div>
+ </div>
+ <button className="lg:hidden text-gray-500 hover:text-black" onClick={() => setMobileMenuOpen(false)}>
+   <X size={24} />
+ </button>
  </div>
 
  <nav className="flex flex-col gap-2 flex-1">
@@ -99,11 +113,16 @@ export default function MainLayout() {
  </aside>
 
  {/* Main Content */}
- <main className="ml-[270px] flex-1 flex flex-col min-w-0">
- <header className="h-[72px] bg-white/80 backdrop-blur-md border-b border-[rgba(210,200,185,0.5)] flex items-center justify-between px-8 sticky top-0 z-40 shadow-sm">
- <div className="relative w-[380px]">
- <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
- <input type="text" placeholder="Search projects, skills, or notes..." className="w-full bg-[#F7F4EE] border border-[rgba(210,200,185,0.5)] rounded-full py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:border-[#C85A32] transition-colors" />
+ <main className="lg:ml-[270px] flex-1 flex flex-col min-w-0">
+ <header className="h-[72px] bg-white/80 backdrop-blur-md border-b border-[rgba(210,200,185,0.5)] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30 shadow-sm gap-2">
+ <div className="flex items-center gap-3">
+   <button className="lg:hidden text-gray-600 hover:text-[#C85A32] shrink-0" onClick={() => setMobileMenuOpen(true)}>
+     <Menu size={24} />
+   </button>
+   <div className="relative w-full max-w-[380px] hidden md:block">
+   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+   <input type="text" placeholder="Search projects, skills, or notes..." className="w-full bg-[#F7F4EE] border border-[rgba(210,200,185,0.5)] rounded-full py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:border-[#C85A32] transition-colors" />
+   </div>
  </div>
 
  <div className="flex items-center gap-4">
@@ -145,16 +164,17 @@ export default function MainLayout() {
    </div>
  )}
  </div>
- <button className="btn-primary" onClick={() => navigate('/projects?create=true')}>
+ <button className="btn-primary whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2" onClick={() => navigate('/projects?create=true')}>
  <span>Post Project</span>
  </button>
- <button onClick={logout} className="btn-secondary py-1.5 px-3 text-sm" title="Log Out">
- 🚪 Log Out
+ <button onClick={logout} className="btn-secondary py-1.5 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap" title="Log Out">
+ <LogOut size={16} className="inline sm:hidden" />
+ <span className="hidden sm:inline">🚪 Log Out</span>
  </button>
  </div>
  </header>
 
- <div className="p-8 flex-1">
+ <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden">
  <Outlet />
  </div>
  </main>
@@ -167,7 +187,7 @@ function NavItem({ to, icon, label, badge }) {
  <NavLink to={to} className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'text-[#C85A32] bg-[#C85A32]/10 border border-[#C85A32]/25 font-semibold' : 'text-gray-500 hover:text-gray-800 hover:bg-[#C85A32]/5 hover:translate-x-1'}`}>
  {icon}
  <span>{label}</span>
- {badge !== undefined && (
+ {badge !== undefined && badge > 0 && (
  <span className="ml-auto bg-gradient-to-br from-[#C85A32] to-[#6B46C1] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{badge}</span>
  )}
  </NavLink>
