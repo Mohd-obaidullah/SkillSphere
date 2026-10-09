@@ -25,6 +25,26 @@ export default function MainLayout() {
    return () => clearInterval(interval);
  }, []);
 
+ const notifRef = React.useRef(null);
+ React.useEffect(() => {
+   const handleClickOutside = (event) => {
+     if (notifRef.current && !notifRef.current.contains(event.target)) {
+       setShowNotifs(false);
+     }
+   };
+   const handleEscape = (event) => {
+     if (event.key === 'Escape') {
+       setShowNotifs(false);
+     }
+   };
+   document.addEventListener('mousedown', handleClickOutside);
+   document.addEventListener('keydown', handleEscape);
+   return () => {
+     document.removeEventListener('mousedown', handleClickOutside);
+     document.removeEventListener('keydown', handleEscape);
+   };
+ }, []);
+
  const markAsRead = async (notifId) => {
    try {
      await notificationsAPI.markAsRead(notifId);
@@ -87,7 +107,7 @@ export default function MainLayout() {
  </div>
 
  <div className="flex items-center gap-4">
- <div className="relative">
+ <div className="relative" ref={notifRef}>
  <button 
    className="relative w-10 h-10 rounded-full bg-white border border-[rgba(210,200,185,0.5)] flex items-center justify-center hover:border-[#C85A32] transition-colors"
    onClick={() => setShowNotifs(!showNotifs)}

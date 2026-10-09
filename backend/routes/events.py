@@ -51,11 +51,16 @@ def create_event():
     if not data.get('title') or not data.get('date'):
         return jsonify({"msg": "Title and date are required"}), 400
         
+    registration_url = data.get('registration_url', '')
+    if registration_url and not (registration_url.startswith('http://') or registration_url.startswith('https://')):
+        return jsonify({"msg": "Registration URL must start with http:// or https://"}), 400
+
     new_event = {
         "title": data.get('title'),
         "date": data.get('date'),
         "type": data.get('type', 'General'),
         "description": data.get('description', ''),
+        "registration_url": registration_url,
         "attendees": [],
         "created_by": get_jwt_identity(),
         "created_at": datetime.datetime.utcnow()
@@ -64,6 +69,21 @@ def create_event():
     result = db.events.insert_one(new_event)
     new_event['_id'] = str(result.inserted_id)
     return jsonify(new_event), 201
+
+@events_bp.route('/<event_id>', methods=['DELETE'])
+@jwt_required()
+def delete_event(event_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    event = db.events.find_one({"_id": ObjectId(event_id)})
+    if not event: return jsonify({"msg": "Event not found"}), 404
+    
+    if str(event.get('created_by')) != user_id:
+        return jsonify({"msg": "Not authorized to delete this event"}), 403
+        
+    db.events.delete_one({"_id": ObjectId(event_id)})
+    return jsonify({"msg": "Event deleted successfully"}), 200
 
 @events_bp.route('/<event_id>/register', methods=['POST'])
 @jwt_required()

@@ -43,12 +43,23 @@ def upload_document():
         return jsonify({"msg": "B2 integration unverified. Missing configuration."}), 503
 
     user_id = get_jwt_identity()
+    room_id_str = request.form.get("room_id")
+    
+    db = get_db()
+    if db is None:
+        return jsonify({"msg": "Database not configured."}), 503
+        
+    if room_id_str:
+        room = db.rooms.find_one({"_id": ObjectId(room_id_str)})
+        if not room or ObjectId(user_id) not in room.get('members', []):
+            return jsonify({"msg": "Not authorized to upload to this room."}), 403
+
     filename = secure_filename(file.filename)
     unique_key = f"docs/{user_id}/{uuid.uuid4().hex}_{filename}"
     
     success, result = upload_to_b2(file_content, unique_key, file.content_type)
     if not success:
-        return jsonify({"msg": f"Upload failed: {result}"}), 500
+        return jsonify({"msg": result}), 500
         
     # Save metadata to DB
     db = get_db()
@@ -58,7 +69,7 @@ def upload_document():
             "provider": "b2",
             "storage_key": unique_key,
             "uploader_id": ObjectId(user_id),
-            "room_id": ObjectId(request.form.get("room_id")) if request.form.get("room_id") else None,
+            "room_id": ObjectId(room_id_str) if room_id_str else None,
             "file_type": file.content_type,
             "size_bytes": file_size,
             "status": "active",

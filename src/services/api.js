@@ -62,15 +62,18 @@ export const peersAPI = {
 export const projectsAPI = {
  getProjects: (search) => api.get(`/projects/?q=${search || ''}`),
  createProject: (data) => api.post('/projects/', data),
+ deleteProject: (projectId) => api.delete(`/projects/${projectId}`),
  applyProject: (projectId) => api.post(`/projects/${projectId}/apply`),
  getTasks: (projectId) => api.get(`/projects/${projectId}/tasks`),
  createTask: (projectId, data) => api.post(`/projects/${projectId}/tasks`, data),
  updateTask: (taskId, data) => api.put(`/projects/tasks/${taskId}`, data),
+ deleteTask: (taskId) => api.delete(`/projects/tasks/${taskId}`),
 };
 
 export const roomsAPI = {
  getRooms: () => api.get('/rooms/'),
  createRoom: (data) => api.post('/rooms/', data),
+ deleteRoom: (roomId) => api.delete(`/rooms/${roomId}`),
  joinRoom: (roomId) => api.post(`/rooms/${roomId}/join`),
  getQuestions: (roomId) => api.get(`/rooms/${roomId}/questions`),
  createQuestion: (roomId, data) => api.post(`/rooms/${roomId}/questions`, data),
@@ -87,6 +90,7 @@ export const evidenceAPI = {
 export const eventsAPI = {
  getEvents: () => api.get('/events/'),
  createEvent: (data) => api.post('/events/', data),
+ deleteEvent: (eventId) => api.delete(`/events/${eventId}`),
  registerEvent: (eventId) => api.post(`/events/${eventId}/register`),
  unregisterEvent: (eventId) => api.post(`/events/${eventId}/unregister`),
 };

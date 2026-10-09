@@ -26,6 +26,13 @@ export default function StudyNotes() {
  const [aiResult, setAiResult] = useState(null);
  const [aiError, setAiError] = useState(null);
 
+ const [toast, setToast] = useState(null);
+ 
+ const showToast = (msg, type='info') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+ };
+
  const fetchRooms = async () => {
  setLoading(true);
  try {
@@ -51,6 +58,20 @@ export default function StudyNotes() {
  fetchRooms();
  } catch (e) {
  alert("Failed to create room");
+ }
+ };
+
+ const handleDeleteRoom = async (roomId) => {
+ if (!window.confirm("Are you sure you want to delete this room?")) return;
+ try {
+ await roomsAPI.deleteRoom(roomId);
+ showToast("Room deleted successfully", "success");
+ if (activeRoom && activeRoom._id === roomId) {
+     setActiveRoom(null);
+ }
+ fetchRooms();
+ } catch (err) {
+ alert(err.response?.data?.msg || 'Failed to delete room');
  }
  };
 
@@ -140,6 +161,11 @@ export default function StudyNotes() {
  if (activeRoom) {
  return (
  <div className="animate-[fadeIn_0.35s_ease-out_forwards]">
+ {toast && (
+    <div className={`fixed bottom-4 right-4 p-4 rounded-lg text-white shadow-lg z-50 ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>
+        {toast.msg}
+    </div>
+ )}
  <button className="text-gray-500 hover:text-black mb-4 flex items-center gap-1" onClick={() => setActiveRoom(null)}>
  &larr; Back to Rooms
  </button>
@@ -274,6 +300,11 @@ export default function StudyNotes() {
 
  return (
  <div className="animate-[fadeIn_0.35s_ease-out_forwards]">
+ {toast && (
+    <div className={`fixed bottom-4 right-4 p-4 rounded-lg text-white shadow-lg z-50 ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>
+        {toast.msg}
+    </div>
+ )}
  <div className="flex items-center justify-between mb-8">
  <div>
  <h2 className="font-heading text-3xl font-extrabold mb-1">Study Groups & Rooms</h2>
@@ -291,7 +322,12 @@ export default function StudyNotes() {
  <div>
  <div className="flex justify-between items-start mb-2">
  <span className="tag bg-[#6B46C1]/10 text-[#6B46C1]">{room.subject}</span>
- <span className="text-xs text-gray-500 flex items-center gap-1"><Users size={12}/> {room.members.length}</span>
+ <div className="flex gap-2 items-center">
+    <span className="text-xs text-gray-500 flex items-center gap-1"><Users size={12}/> {room.members.length}</span>
+    {room.owner_id === myId && (
+        <button className="text-red-500 hover:text-red-700 text-xs font-bold" onClick={() => handleDeleteRoom(room._id)} title="Delete Room">Delete</button>
+    )}
+ </div>
  </div>
  <h3 className="font-bold text-lg mb-1">{room.title}</h3>
  <p className="text-sm text-gray-600 mb-4 line-clamp-2">{room.description}</p>

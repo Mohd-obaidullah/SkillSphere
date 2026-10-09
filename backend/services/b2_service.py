@@ -15,9 +15,13 @@ def get_b2_client():
 def upload_to_b2(file_bytes, key, content_type):
     s3 = get_b2_client()
     if not s3:
-        return False, "B2 client not configured"
+        return False, "B2 client not configured. Missing B2_KEY_ID or B2_APPLICATION_KEY."
         
     bucket = current_app.config.get('B2_BUCKET_NAME')
+    if not bucket:
+        return False, "B2_BUCKET_NAME is not configured."
+    if not current_app.config.get('B2_S3_ENDPOINT'):
+        return False, "B2_S3_ENDPOINT is not configured."
     try:
         s3.put_object(
             Bucket=bucket,
@@ -27,7 +31,9 @@ def upload_to_b2(file_bytes, key, content_type):
         )
         return True, key
     except ClientError as e:
-        return False, str(e)
+        return False, f"B2 upload failed due to a cloud provider error: {e.response['Error']['Code']}"
+    except Exception as e:
+        return False, f"B2 upload failed: {str(e)}"
 
 def get_b2_url(key):
     # Presigned URL could be generated here, or public URL depending on bucket visibility

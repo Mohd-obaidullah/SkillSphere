@@ -66,6 +66,17 @@ export default function Projects() {
  }
  };
 
+ const handleDeleteProject = async (id) => {
+ if (!window.confirm("Are you sure you want to delete this project?")) return;
+ try {
+ await projectsAPI.deleteProject(id);
+ addNotification("Project Deleted", "Project was successfully deleted.", "info");
+ fetchProjects();
+ } catch (err) {
+ alert(err.response?.data?.msg || 'Failed to delete project');
+ }
+ };
+
  const handleCreate = async (e) => {
  e.preventDefault();
  try {
@@ -136,7 +147,10 @@ export default function Projects() {
  <div>
  <div className="flex justify-between items-start mb-3">
  <span className="tag bg-[#6B46C1]/10 text-[#6B46C1]">{p.status}</span>
- <div className="flex gap-2">
+ <div className="flex gap-2 items-center">
+ {isOwner && (
+     <button className="text-red-500 hover:text-red-700 text-xs font-bold mr-2" onClick={() => handleDeleteProject(p._id)} title="Delete Project">Delete</button>
+ )}
  <button className="btn-secondary text-xs py-1 px-2" onClick={() => toggleBookmark(p._id)}>{isBookmarked ? '⭐ Saved' : '☆ Save'}</button>
  </div>
  </div>

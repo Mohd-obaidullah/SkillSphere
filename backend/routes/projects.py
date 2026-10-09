@@ -65,6 +65,22 @@ def create_project():
     
     return jsonify(proj), 201
 
+@projects_bp.route('/<proj_id>', methods=['DELETE'])
+@jwt_required()
+def delete_project(proj_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    proj = db.projects.find_one({"_id": ObjectId(proj_id)})
+    if not proj: return jsonify({"msg": "Project not found"}), 404
+    
+    if str(proj.get('owner_id')) != user_id:
+        return jsonify({"msg": "Not authorized to delete this project"}), 403
+        
+    db.projects.delete_one({"_id": ObjectId(proj_id)})
+    db.tasks.delete_many({"project_id": ObjectId(proj_id)})
+    return jsonify({"msg": "Project deleted successfully"}), 200
+
 @projects_bp.route('/<proj_id>/apply', methods=['POST'])
 @jwt_required()
 def apply_project(proj_id):
@@ -148,3 +164,23 @@ def update_task(task_id):
     
     db.tasks.update_one({"_id": ObjectId(task_id)}, {"$set": update})
     return jsonify({"msg": "Task updated"}), 200
+
+@projects_bp.route('/tasks/<task_id>', methods=['DELETE'])
+@jwt_required()
+def delete_task(task_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    task = db.tasks.find_one({"_id": ObjectId(task_id)})
+    if not task: return jsonify({"msg": "Task not found"}), 404
+    
+    # Task can be deleted if user is assignee or project owner
+    proj = db.projects.find_one({"_id": task['project_id']})
+    is_owner = proj and str(proj.get('owner_id')) == user_id
+    is_assignee = str(task.get('assignee_id')) == user_id
+    
+    if not is_owner and not is_assignee:
+        return jsonify({"msg": "Not authorized to delete this task"}), 403
+        
+    db.tasks.delete_one({"_id": ObjectId(task_id)})
+    return jsonify({"msg": "Task deleted successfully"}), 200

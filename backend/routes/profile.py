@@ -29,7 +29,7 @@ def update_profile():
     data = request.get_json()
     if not data: return jsonify({"msg": "Missing JSON"}), 400
     
-    allowed_fields = ['name', 'university', 'major', 'bio', 'avatar']
+    allowed_fields = ['name', 'university', 'major', 'bio', 'avatar', 'timer_settings']
     update_data = {k: v for k, v in data.items() if k in allowed_fields}
     update_data['updated_at'] = datetime.datetime.utcnow()
     

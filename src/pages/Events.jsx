@@ -15,6 +15,7 @@ export default function Events() {
   const [newDate, setNewDate] = useState('');
   const [newType, setNewType] = useState('Hackathon');
   const [newDesc, setNewDesc] = useState('');
+  const [newRegUrl, setNewRegUrl] = useState('');
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -52,17 +53,33 @@ export default function Events() {
     }
   };
 
+  const handleDelete = async (eventId) => {
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    try {
+      await eventsAPI.deleteEvent(eventId);
+      addNotification("Event Deleted", "Event successfully removed.", "info");
+      fetchEvents();
+    } catch (err) {
+      alert(err.response?.data?.msg || 'Failed to delete event');
+    }
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (newRegUrl && !newRegUrl.startsWith('http://') && !newRegUrl.startsWith('https://')) {
+        alert("Registration URL must start with http:// or https://");
+        return;
+    }
     try {
       await eventsAPI.createEvent({
         title: newTitle,
         date: newDate,
         type: newType,
-        description: newDesc
+        description: newDesc,
+        registration_url: newRegUrl
       });
       setShowModal(false);
-      setNewTitle(''); setNewDate(''); setNewType('Hackathon'); setNewDesc('');
+      setNewTitle(''); setNewDate(''); setNewType('Hackathon'); setNewDesc(''); setNewRegUrl('');
       addNotification("Event Created", "Your event is now live!", "success");
       fetchEvents();
     } catch (err) {
@@ -114,7 +131,12 @@ export default function Events() {
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <span className="tag bg-[#6B46C1]/10 text-[#6B46C1] text-xs font-bold">{e.type}</span>
-                    <span className="text-xs font-semibold text-gray-500 flex items-center gap-1"><Users size={14} /> {e.attendees?.length || 0} attending</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-semibold text-gray-500 flex items-center gap-1"><Users size={14} /> {e.attendees?.length || 0} attending</span>
+                      {e.created_by === myId && (
+                          <button onClick={() => handleDelete(e._id)} className="text-red-500 hover:text-red-700 text-xs font-bold" title="Delete Event">Delete</button>
+                      )}
+                    </div>
                   </div>
                   <h3 className="font-bold text-lg leading-tight mb-2 group-hover:text-[#C85A32] transition-colors">{e.title}</h3>
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{e.description}</p>
@@ -131,17 +153,22 @@ export default function Events() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-[rgba(210,200,185,0.5)]">
+                <div className="pt-4 border-t border-[rgba(210,200,185,0.5)] flex gap-2 flex-wrap">
                   {isRegistered ? (
-                    <button onClick={() => handleUnregister(e._id)} className="w-full py-2 rounded-xl bg-green-50 text-green-700 font-bold border border-green-200 hover:bg-green-100 transition-colors flex items-center justify-center gap-2">
+                    <button onClick={() => handleUnregister(e._id)} className="flex-1 py-2 rounded-xl bg-green-50 text-green-700 font-bold border border-green-200 hover:bg-green-100 transition-colors flex items-center justify-center gap-2">
                       <CheckCircle size={18} />
-                      Registered
+                      RSVP'd
                     </button>
                   ) : (
-                    <button onClick={() => handleRegister(e._id)} className="w-full btn-primary py-2 flex items-center justify-center gap-2">
+                    <button onClick={() => handleRegister(e._id)} className="flex-1 btn-primary py-2 flex items-center justify-center gap-2">
                       <Ticket size={18} />
-                      Register Now
+                      RSVP Here
                     </button>
+                  )}
+                  {e.registration_url && (
+                    <a href={e.registration_url} target="_blank" rel="noopener noreferrer" className="flex-1 btn-secondary text-[#6B46C1] border-[#6B46C1] py-2 flex items-center justify-center gap-2 text-sm font-bold">
+                      Ext. Register
+                    </a>
                   )}
                 </div>
               </div>
@@ -151,8 +178,8 @@ export default function Events() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative animate-[slideUp_0.3s_ease-out]">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_0.2s_ease-out] overflow-y-auto">
+          <div className="bg-white p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl relative animate-[slideUp_0.3s_ease-out] my-8">
             <h3 className="font-bold text-2xl mb-6">Post an Event</h3>
             <form onSubmit={handleCreate} className="flex flex-col gap-4">
               <div className="form-group mb-0">
@@ -175,6 +202,10 @@ export default function Events() {
               <div className="form-group mb-0">
                 <label className="font-semibold text-sm">Description</label>
                 <textarea required className="form-control" rows="3" value={newDesc} onChange={e=>setNewDesc(e.target.value)} placeholder="What is this event about?"></textarea>
+              </div>
+              <div className="form-group mb-0">
+                <label className="font-semibold text-sm">Registration URL (Optional)</label>
+                <input type="url" className="form-control" value={newRegUrl} onChange={e=>setNewRegUrl(e.target.value)} placeholder="https://..." />
               </div>
               
               <div className="flex justify-end gap-3 mt-4">

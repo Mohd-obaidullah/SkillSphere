@@ -44,6 +44,23 @@ def create_room():
     
     return jsonify(room), 201
 
+@rooms_bp.route('/<room_id>', methods=['DELETE'])
+@jwt_required()
+def delete_room(room_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    room = db.rooms.find_one({"_id": ObjectId(room_id)})
+    if not room: return jsonify({"msg": "Room not found"}), 404
+    
+    if str(room.get('owner_id')) != user_id:
+        return jsonify({"msg": "Not authorized to delete this room"}), 403
+        
+    db.rooms.delete_one({"_id": ObjectId(room_id)})
+    db.discussions.delete_many({"room_id": ObjectId(room_id)})
+    db.files.delete_many({"room_id": ObjectId(room_id)})
+    return jsonify({"msg": "Room deleted successfully"}), 200
+
 @rooms_bp.route('/<room_id>/join', methods=['POST'])
 @jwt_required()
 def join_room(room_id):
