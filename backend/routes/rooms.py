@@ -76,6 +76,25 @@ def join_room(room_id):
     db.rooms.update_one({"_id": ObjectId(room_id)}, {"$push": {"members": ObjectId(user_id)}})
     return jsonify({"msg": "Joined room"}), 200
 
+@rooms_bp.route('/<room_id>/members', methods=['GET'])
+@jwt_required()
+def get_room_members(room_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    room = db.rooms.find_one({"_id": ObjectId(room_id)})
+    if not room or ObjectId(user_id) not in room.get('members', []):
+        return jsonify({"msg": "Not authorized"}), 403
+    
+    members = list(db.users.find(
+        {"_id": {"$in": room.get('members', [])}},
+        {"password": 0, "email": 0}
+    ))
+    
+    for m in members:
+        m['_id'] = str(m['_id'])
+        
+    return jsonify(members), 200
+
 @rooms_bp.route('/<room_id>/questions', methods=['GET'])
 @jwt_required()
 def get_questions(room_id):

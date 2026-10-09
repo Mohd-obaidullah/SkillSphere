@@ -67,11 +67,23 @@ def request_connection(target_id):
     db = get_db()
     user_id = get_jwt_identity()
     
-    # Prevent self request
     if user_id == target_id: return jsonify({"msg": "Cannot connect to yourself"}), 400
     
     target = db.users.find_one({"_id": ObjectId(target_id)})
     if not target: return jsonify({"msg": "User not found"}), 404
+
+    requester = db.users.find_one({"_id": ObjectId(user_id)})
+    
+    # Check if already connected or pending
+    existing = db.connections.find_one({
+        "$or": [
+            {"requester": ObjectId(user_id), "target": ObjectId(target_id)},
+            {"requester": ObjectId(target_id), "target": ObjectId(user_id)}
+        ]
+    })
+    
+    if existing:
+        return jsonify({"msg": "Connection already exists or is pending"}), 400
     
     conn = {
         "requester": ObjectId(user_id),
@@ -80,10 +92,80 @@ def request_connection(target_id):
         "created_at": datetime.datetime.utcnow()
     }
     
-    # Upsert to prevent duplicates
-    db.connections.update_one(
-        {"requester": ObjectId(user_id), "target": ObjectId(target_id)},
-        {"$set": conn},
-        upsert=True
-    )
+    res = db.connections.insert_one(conn)
+    
+    # Create notification for target
+    new_notif = {
+        "user_id": ObjectId(target_id),
+        "title": "New Connection Request",
+        "message": f"{requester.get('name', 'Someone')} sent you a connection request.",
+        "type": "connection_request",
+        "read": False,
+        "created_at": datetime.datetime.utcnow(),
+        "timestamp": "Just now",
+        "related_id": str(res.inserted_id)
+    }
+    db.notifications.insert_one(new_notif)
+    
     return jsonify({"msg": "Connection request sent"}), 200
+
+@peers_bp.route('/requests/incoming', methods=['GET'])
+@jwt_required()
+def get_incoming_requests():
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    reqs = list(db.connections.find({"target": ObjectId(user_id), "status": "pending"}))
+    result = []
+    for r in reqs:
+        requester = db.users.find_one({"_id": r["requester"]}, {"password": 0})
+        if requester:
+            requester["_id"] = str(requester["_id"])
+            r_data = {
+                "_id": str(r["_id"]),
+                "requester": requester,
+                "created_at": r["created_at"]
+            }
+            result.append(r_data)
+            
+    return jsonify(result), 200
+
+@peers_bp.route('/request/<req_id>/accept', methods=['POST'])
+@jwt_required()
+def accept_request(req_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    req = db.connections.find_one({"_id": ObjectId(req_id), "target": ObjectId(user_id), "status": "pending"})
+    if not req: return jsonify({"msg": "Request not found"}), 404
+    
+    db.connections.update_one({"_id": ObjectId(req_id)}, {"$set": {"status": "accepted"}})
+    
+    target = db.users.find_one({"_id": ObjectId(user_id)})
+    
+    # Notify requester
+    new_notif = {
+        "user_id": req["requester"],
+        "title": "Connection Accepted",
+        "message": f"{target.get('name', 'Someone')} accepted your connection request.",
+        "type": "connection_accepted",
+        "read": False,
+        "created_at": datetime.datetime.utcnow(),
+        "timestamp": "Just now"
+    }
+    db.notifications.insert_one(new_notif)
+    
+    return jsonify({"msg": "Request accepted"}), 200
+
+@peers_bp.route('/request/<req_id>/reject', methods=['POST'])
+@jwt_required()
+def reject_request(req_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    req = db.connections.find_one({"_id": ObjectId(req_id), "target": ObjectId(user_id), "status": "pending"})
+    if not req: return jsonify({"msg": "Request not found"}), 404
+    
+    db.connections.update_one({"_id": ObjectId(req_id)}, {"$set": {"status": "rejected"}})
+    
+    return jsonify({"msg": "Request rejected"}), 200

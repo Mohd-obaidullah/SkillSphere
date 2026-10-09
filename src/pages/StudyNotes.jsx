@@ -11,6 +11,7 @@ export default function StudyNotes() {
  const [activeRoom, setActiveRoom] = useState(null);
  const [resources, setResources] = useState([]);
  const [questions, setQuestions] = useState([]);
+ const [roomMembers, setRoomMembers] = useState([]);
  
  const [showCreate, setShowCreate] = useState(false);
  const [newTitle, setNewTitle] = useState('');
@@ -87,12 +88,14 @@ export default function StudyNotes() {
  const openRoom = async (room) => {
  setActiveRoom(room);
  try {
-  const [resData, qData] = await Promise.all([
+  const [resData, qData, mData] = await Promise.all([
   roomsAPI.getResources(room._id),
-  roomsAPI.getQuestions(room._id)
+  roomsAPI.getQuestions(room._id),
+  roomsAPI.getRoomMembers(room._id)
   ]);
  setResources(resData.data);
  setQuestions(qData.data);
+ setRoomMembers(mData.data);
  } catch (e) {
  console.error(e);
  }
@@ -289,8 +292,18 @@ export default function StudyNotes() {
  </div>
  
  <div className="glass-card">
- <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Users size={18} /> Members ({activeRoom.members.length})</h3>
- <p className="text-sm text-gray-500">Members can participate in discussions and share files.</p>
+ <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><Users size={18} /> Members ({roomMembers.length})</h3>
+ <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+ {roomMembers.map(m => (
+   <div key={m._id} className="flex items-center gap-3">
+     <img src={m.avatar || 'https://via.placeholder.com/150'} alt={m.name} className="w-10 h-10 rounded-full border border-[rgba(210,200,185,0.5)]" />
+     <div className="flex flex-col">
+       <span className="text-sm font-bold leading-tight">{m.name} {m._id === activeRoom.owner_id && <span className="text-[10px] text-[#C85A32] ml-1 bg-[#C85A32]/10 px-1 rounded">Owner</span>}</span>
+       <span className="text-[10px] text-gray-500 line-clamp-1">{m.bio || 'Member'}</span>
+     </div>
+   </div>
+ ))}
+ </div>
  </div>
  </div>
  </div>

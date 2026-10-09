@@ -57,6 +57,9 @@ export const storageAPI = {
 export const peersAPI = {
  getPeers: (search) => api.get(`/peers/?q=${search || ''}`),
  requestConnection: (userId) => api.post(`/peers/request/${userId}`),
+ getIncomingRequests: () => api.get(`/peers/requests/incoming`),
+ acceptRequest: (reqId) => api.post(`/peers/request/${reqId}/accept`),
+ rejectRequest: (reqId) => api.post(`/peers/request/${reqId}/reject`),
 };
 
 export const projectsAPI = {
@@ -75,6 +78,7 @@ export const roomsAPI = {
  createRoom: (data) => api.post('/rooms/', data),
  deleteRoom: (roomId) => api.delete(`/rooms/${roomId}`),
  joinRoom: (roomId) => api.post(`/rooms/${roomId}/join`),
+ getRoomMembers: (roomId) => api.get(`/rooms/${roomId}/members`),
  getQuestions: (roomId) => api.get(`/rooms/${roomId}/questions`),
  createQuestion: (roomId, data) => api.post(`/rooms/${roomId}/questions`, data),
  getResources: (roomId) => api.get(`/rooms/${roomId}/resources`),
