@@ -62,6 +62,17 @@ export const peersAPI = {
  rejectRequest: (reqId) => api.post(`/peers/request/${reqId}/reject`),
 };
 
+export const swapsAPI = {
+ requestSwap: (targetId, data) => api.post(`/swaps/request/${targetId}`, data),
+ getIncomingRequests: () => api.get('/swaps/requests/incoming'),
+ getSentRequests: () => api.get('/swaps/requests/sent'),
+ acceptRequest: (reqId) => api.post(`/swaps/request/${reqId}/accept`),
+ rejectRequest: (reqId) => api.post(`/swaps/request/${reqId}/reject`),
+ getSwaps: () => api.get('/swaps/'),
+ addSession: (swapId, data) => api.post(`/swaps/${swapId}/sessions`, data),
+ completeSwap: (swapId) => api.post(`/swaps/${swapId}/complete`)
+};
+
 export const projectsAPI = {
  getProjects: (search) => api.get(`/projects/?q=${search || ''}`),
  createProject: (data) => api.post('/projects/', data),

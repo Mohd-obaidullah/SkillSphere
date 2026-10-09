@@ -44,6 +44,8 @@ def create_app():
     app.register_blueprint(evidence_bp, url_prefix='/api/evidence')
     app.register_blueprint(events_bp, url_prefix='/api/events')
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
+    from routes.swaps import swaps_bp
+    app.register_blueprint(swaps_bp, url_prefix='/api/swaps')
 
     @app.route('/api/health', methods=['GET'])
     def health_check():
