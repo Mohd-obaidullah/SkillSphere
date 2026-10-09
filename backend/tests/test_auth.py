@@ -56,3 +56,13 @@ def test_me_authorized(client, auth_token):
     res = client.get('/api/auth/me', headers={"Authorization": f"Bearer {auth_token}"})
     assert res.status_code == 200
     assert res.get_json()['user']['email'] == "test@example.com"
+
+def test_cors_preflight(client):
+    res = client.options('/api/auth/login', headers={
+        "Origin": "https://skill-sphere-sand.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "Content-Type"
+    })
+    assert res.status_code == 200
+    assert res.headers.get("Access-Control-Allow-Origin") == "https://skill-sphere-sand.vercel.app"
+    assert "POST" in res.headers.get("Access-Control-Allow-Methods", "")

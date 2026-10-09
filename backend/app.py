@@ -19,8 +19,18 @@ def create_app():
 
     # Initialize extensions
     import os
-    frontend_url = os.getenv('FRONTEND_URL', '*')
-    CORS(app, resources={r"/api/*": {"origins": frontend_url}})
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+    allowed_origins = [
+        "https://skill-sphere-sand.vercel.app",
+        frontend_url
+    ]
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": allowed_origins,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
     jwt = JWTManager(app)
     init_db(app)
 
