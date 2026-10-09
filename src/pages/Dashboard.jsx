@@ -102,7 +102,7 @@ export default function Dashboard() {
  <h3 className="text-lg font-bold">My Skills</h3>
  <button className="btn-secondary text-xs py-1.5 px-3" onClick={() => navigate('/profile')}>+ Add Skill</button>
  </div>
- {u.skills.length === 0 ? (
+ {(!u.skills || u.skills.length === 0) ? (
  <p className="text-gray-400 text-sm">You haven't added any skills yet.</p>
  ) : (
  <div className="flex flex-col gap-4">

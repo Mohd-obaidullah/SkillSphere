@@ -48,9 +48,11 @@ def get_peers():
         p['_id'] = str(p['_id'])
         p['match_score'] = calculate_match_score(current_user, p)
         # Explain match
-        common = {s.get('name') for s in p.get('skills', [])}.intersection({s.get('name') for s in current_user.get('skills', [])})
-        if common:
-            p['match_reason'] = f"Shares skills: {', '.join(common)}"
+        u1_s_lower = {s.get('name').lower(): s.get('name') for s in current_user.get('skills', [])}
+        u2_s_lower = {s.get('name').lower(): s.get('name') for s in p.get('skills', [])}
+        common_keys = set(u1_s_lower.keys()).intersection(set(u2_s_lower.keys()))
+        if common_keys:
+            p['match_reason'] = f"Shares skills: {', '.join([u2_s_lower[k] for k in common_keys])}"
         elif current_user.get('university') == p.get('university'):
             p['match_reason'] = "Same university"
         else:

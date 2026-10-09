@@ -94,12 +94,28 @@ export function AppProvider({ children }) {
  throw err;
  }
  };
+ 
+ const updateSkill = async (skillId, skillData) => {
+ try {
+ await profileAPI.updateSkill(skillId, skillData);
+ setState(prev => ({
+ ...prev,
+ currentUser: {
+ ...prev.currentUser,
+ skills: prev.currentUser.skills.map(s => s.id === skillId ? { ...s, ...skillData } : s)
+ }
+ }));
+ } catch (err) {
+ console.error(err);
+ throw err;
+ }
+ };
 
  return (
  <AppContext.Provider value={{ 
  state, saveState, userId, login, logout, 
  addNotification, isAuthLoading,
- addSkill, deleteSkill
+ addSkill, deleteSkill, updateSkill
  }}>
  {children}
  </AppContext.Provider>

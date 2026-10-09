@@ -31,6 +31,7 @@ export const authAPI = {
   updateProfile: (data) => api.put('/profile/', data),
   getSkills: () => api.get('/profile/skills'),
   addSkill: (data) => api.post('/profile/skills', data),
+  updateSkill: (skillId, data) => api.put(`/profile/skills/${skillId}`, data),
   deleteSkill: (skillId) => api.delete(`/profile/skills/${skillId}`),
   addBadge: (data) => api.post('/profile/badges', data),
  };

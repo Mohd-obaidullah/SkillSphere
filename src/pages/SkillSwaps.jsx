@@ -404,8 +404,10 @@ export default function SkillSwaps() {
                         <label className="block font-bold mb-2 text-[#C85A32]">I can teach {selectedPeer.name}:</label>
                         <p className="text-xs text-gray-500 mb-2">Select from your profile skills</p>
                         <div className="flex flex-wrap gap-2">
-                            {currentUser.skills?.length === 0 ? <p className="text-sm text-red-500">You need to add skills to your profile first!</p> : null}
-                            {currentUser.skills.map(s => (
+                            {(!currentUser.skills || currentUser.skills.length === 0) ? (
+                                <p className="text-sm text-red-500">You need to add skills to your profile first! <a href="/profile" className="underline font-bold">Go to Profile</a></p>
+                            ) : null}
+                            {(currentUser.skills || []).map(s => (
                                 <button type="button" key={s.name} 
                                     className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${teachSkills.includes(s.name) ? 'bg-[#C85A32] text-white border-[#C85A32]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#C85A32]'}`}
                                     onClick={() => toggleSkill(teachSkills, setTeachSkills, s.name)}>
@@ -419,8 +421,10 @@ export default function SkillSwaps() {
                         <label className="block font-bold mb-2 text-[#6B46C1]">I want to learn from {selectedPeer.name}:</label>
                         <p className="text-xs text-gray-500 mb-2">Select from their profile skills</p>
                         <div className="flex flex-wrap gap-2">
-                            {selectedPeer.skills?.length === 0 ? <p className="text-sm text-red-500">This user has no skills listed.</p> : null}
-                            {selectedPeer.skills.map(s => (
+                            {(!selectedPeer.skills || selectedPeer.skills.length === 0) ? (
+                                <p className="text-sm text-red-500">This user has no skills listed.</p>
+                            ) : null}
+                            {(selectedPeer.skills || []).map(s => (
                                 <button type="button" key={s.name} 
                                     className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${learnSkills.includes(s.name) ? 'bg-[#6B46C1] text-white border-[#6B46C1]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#6B46C1]'}`}
                                     onClick={() => toggleSkill(learnSkills, setLearnSkills, s.name)}>

@@ -67,6 +67,12 @@ def add_skill():
     if not skill_name:
         return jsonify({"msg": "Skill name is required"}), 400
         
+    user = db.users.find_one({"_id": ObjectId(user_id)}, {"skills": 1})
+    existing_skills = user.get("skills", [])
+    for s in existing_skills:
+        if s.get("name", "").lower() == skill_name.lower():
+            return jsonify({"msg": "Skill already exists"}), 400
+            
     skill_doc = {
         "id": f"skill-{int(datetime.datetime.utcnow().timestamp())}",
         "name": skill_name,
@@ -81,6 +87,36 @@ def add_skill():
     )
     
     return jsonify(skill_doc), 201
+
+@profile_bp.route('/skills/<skill_id>', methods=['PUT'])
+@jwt_required()
+def update_skill(skill_id):
+    db = get_db()
+    if db is None: return jsonify({"msg": "Database not configured."}), 503
+    
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    level = data.get('level')
+    category = data.get('category')
+    
+    update_fields = {}
+    if level is not None:
+        update_fields["skills.$.level"] = level
+    if category is not None:
+        update_fields["skills.$.category"] = category
+        
+    if not update_fields:
+        return jsonify({"msg": "No fields to update"}), 400
+        
+    res = db.users.update_one(
+        {"_id": ObjectId(user_id), "skills.id": skill_id},
+        {"$set": update_fields}
+    )
+    if res.matched_count == 0:
+        return jsonify({"msg": "Skill not found or unauthorized"}), 404
+        
+    return jsonify({"msg": "Skill updated"}), 200
 
 @profile_bp.route('/skills/<skill_id>', methods=['DELETE'])
 @jwt_required()
