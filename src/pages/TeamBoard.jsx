@@ -9,14 +9,7 @@ export default function TeamBoard() {
  const [searchParams] = useSearchParams();
  const navigate = useNavigate();
 
- const [timerOn, setTimerOn] = useState(false);
- const defaultTimerSettings = { focus: 25, shortBreak: 5, longBreak: 15, sessionsBeforeLong: 4 };
- const userSettings = state.currentUser?.timer_settings || defaultTimerSettings;
- const [timerSettings, setTimerSettings] = useState(userSettings);
- const [timeLeft, setTimeLeft] = useState(userSettings.focus * 60);
- const [timerMode, setTimerMode] = useState('focus'); // focus, shortBreak, longBreak
- const [sessionCount, setSessionCount] = useState(0);
- const [showTimerSettings, setShowTimerSettings] = useState(false);
+
 
  const [projects, setProjects] = useState([]);
  const [activeProject, setActiveProject] = useState(null);
@@ -32,35 +25,7 @@ export default function TeamBoard() {
  const [progressNotes, setProgressNotes] = useState('');
  const [projectStatus, setProjectStatus] = useState('');
 
- // Timer logic
- useEffect(() => {
- let interval = null;
- if (timerOn && timeLeft > 0) {
- interval = setInterval(() => setTimeLeft(l => l - 1), 1000);
- } else if (timerOn && timeLeft === 0) {
- if (timerMode === 'focus') {
-     const newCount = sessionCount + 1;
-     setSessionCount(newCount);
-     if (newCount % timerSettings.sessionsBeforeLong === 0) {
-         setTimerMode('longBreak');
-         setTimeLeft(timerSettings.longBreak * 60);
-         window.alert("Long break time!");
-     } else {
-         setTimerMode('shortBreak');
-         setTimeLeft(timerSettings.shortBreak * 60);
-         window.alert("Short break time!");
-     }
- } else {
-     setTimerMode('focus');
-     setTimeLeft(timerSettings.focus * 60);
-     window.alert("Focus time!");
- }
- }
- return () => clearInterval(interval);
- }, [timerOn, timeLeft, timerMode, sessionCount, timerSettings]);
 
- const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
- const secs = (timeLeft % 60).toString().padStart(2, '0');
 
  const myId = state.currentUser._id;
 
@@ -256,22 +221,6 @@ export default function TeamBoard() {
  </div>
  )}
 
- <div className="glass-card mb-8 text-center max-w-sm mx-auto relative">
- <button 
-    onClick={() => setShowTimerSettings(true)}
-    className="absolute top-4 right-4 text-gray-400 hover:text-[#C85A32]"
-    title="Timer Settings"
- >
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
- </button>
- <h3 className="text-[#C85A32] font-bold mb-2">⏱️ {timerMode === 'focus' ? 'Study Time' : 'Break Time'}</h3>
- <div className="font-heading text-5xl font-extrabold text-[#C85A32] mb-4">{mins}:{secs}</div>
- <div className="flex justify-center gap-2">
- <button className="btn-primary" onClick={() => setTimerOn(true)}>Start</button>
- <button className="btn-secondary" onClick={() => setTimerOn(false)}>Pause</button>
- <button className="btn-secondary" onClick={() => { setTimerOn(false); setTimerMode('focus'); setTimeLeft(timerSettings.focus * 60); setSessionCount(0); }}>Reset</button>
- </div>
- </div>
 
  {projects.length === 0 ? (
  <div className="text-center py-12 text-gray-500">You are not a member of any projects yet.</div>

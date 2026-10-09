@@ -45,7 +45,20 @@ def get_projects():
         # Attach room_id if member
         if any(m["_id"] == str(user_id) for m in p['members']):
             room = db.rooms.find_one({"project_id": str(p['_id'])})
-            if room:
+            if not room:
+                room_doc = {
+                    "title": p.get("title") + " - Team Room",
+                    "description": p.get("description", ""),
+                    "subject": "Project",
+                    "project_id": str(p['_id']),
+                    "owner_id": ObjectId(p['owner_id']),
+                    "members": [ObjectId(m["_id"]) for m in p['members']],
+                    "created_at": datetime.datetime.utcnow(),
+                    "active": True
+                }
+                res = db.rooms.insert_one(room_doc)
+                p['room_id'] = str(res.inserted_id)
+            else:
                 p['room_id'] = str(room['_id'])
 
     return jsonify(projects), 200
