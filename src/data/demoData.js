@@ -1,78 +1,8 @@
 export const INITIAL_DATA = {
- currentUser: {
- name: "Alex Rivera",
- username: "@arivera",
- avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
- role: "Computer Science Major • Senior",
- university: "Stanford University",
- bio: "Passionate full-stack developer & AI enthusiast. Looking to collaborate on open-source web applications & hackathon projects!",
- xp: 2840,
- level: 7,
- levelTitle: "Skill Architect",
- verifiedBadges: ["Verified JS Pro", "React Specialist", "UI/UX Foundations"],
- skills: [
- { name: "React / Next.js", level: 90, category: "Frontend", verified: true },
- { name: "Node.js & Express", level: 85, category: "Backend", verified: true },
- { name: "Python / PyTorch", level: 75, category: "AI & Data", verified: false },
- { name: "UI/UX Design (Figma)", level: 80, category: "Design", verified: true },
- { name: "TypeScript", level: 88, category: "Frontend", verified: true },
- { name: "PostgreSQL & Prisma", level: 70, category: "Database", verified: false },
- { name: "Docker & CI/CD", level: 65, category: "DevOps", verified: false }
-  ],
- targetSkills: ["Rust", "GraphQL", "Tailwind CSS Architecture", "Solidity"],
- savedProjectIds: ["proj-2"],
- settings: {
- publicProfile: true,
- allowRequests: true,
- showOnlineStatus: true,
- emailNotifs: true,
- aiTips: true,
- accentColor: "terracotta"
- },
- stats: {
- projectsCompleted: 12,
- collaborations: 8,
- skillSwaps: 15,
- endorsements: 42
- }
-  },
- notifications: [
- {
- id: "notif-1", title: "Team Application Accepted!",
- message: "Elena Rostova accepted your application to join EcoPulse.",
- timestamp: "10 mins ago", read: false, type: "project"
- },
- {
- id: "notif-2", title: "New Skill Swap Request",
- message: "Priya Sharma requested a Figma ➔ Python skill swap session.",
- timestamp: "1 hour ago", read: false, type: "swap"
- },
- {
- id: "notif-3", title: "Badge Verified!",
- message: "You scored 100% on Modern JavaScript Assessment. Badge added to profile.",
- timestamp: "Yesterday", read: true, type: "badge"
- }
-  ],
- resources: [
- { id: "res-1", title: "Complete Modern React & Next.js Cheatsheet 2026", category: "Notes & Guides", uploader: "Alex Rivera", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150", downloads: 342, format: "PDF Document", link: "#" },
- { id: "res-2", title: "Data Structures & Algorithms Python Practice Handbook", category: "Textbooks", uploader: "Elena Rostova", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150", downloads: 512, format: "eBook PDF", link: "#" },
- { id: "res-3", title: "Figma UI/UX Component Library & Design Tokens", category: "Design System", uploader: "Priya Sharma", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150", downloads: 820, format: "Figma Kit", link: "#" }
-  ],
- projects: [
- { id: "proj-1", title: "EcoPulse - AI-Powered Carbon Footprint Tracker", description: "Building an interactive mobile & web dashboard that uses Machine Learning to analyze receipt photos and compute personal carbon footprint metrics.", category: "Sustainability & AI", status: "Actively Recruiting", owner: { name: "Alex Rivera", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250", school: "Stanford University" }, tags: ["Python", "React Native", "TensorFlow", "Node.js"], requiredRoles: ["UI/UX Designer", "ML Engineer", "Mobile Dev"], matchScore: 94, membersCount: 3, maxMembers: 5, deadline: "2026-11-15", difficulty: "Intermediate" },
- { id: "proj-2", title: "DevSprint - Real-Time Code Pair & Review Platform", description: "A collaborative code playground with voice chat, automated test generation via LLMs, and instant peer feedback.", category: "Developer Tools", status: "In Progress", owner: { name: "Marcus Chen", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150", school: "UC Berkeley" }, tags: ["TypeScript", "WebSockets", "WebRTC", "Docker"], requiredRoles: ["Backend Engineer", "DevOps Lead"], matchScore: 88, membersCount: 2, maxMembers: 4, deadline: "2026-12-01", difficulty: "Advanced" },
- { id: "proj-3", title: "CampusConnect - Student Event & Marketplace Hub", description: "Hyper-local social platform for university campus clubs, peer book exchanges, and hackathon teammate matching.", category: "EdTech & Social", status: "Actively Recruiting", owner: { name: "Sophia Taylor", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150", school: "Harvard University" }, tags: ["React", "Tailwind CSS", "Firebase", "Figma"], requiredRoles: ["Frontend Engineer", "Product Manager", "Mobile Developer"], matchScore: 96, membersCount: 4, maxMembers: 6, deadline: "2026-10-30", difficulty: "Beginner Friendly" },
- { id: "proj-4", title: "BioVerse - Interactive 3D Anatomy Visualizer", description: "WebXR application allowing medical and biology students to inspect 3D organ models with interactive quizzes.", category: "3D & Medical EdTech", status: "Actively Recruiting", owner: { name: "David Kim", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150", school: "Johns Hopkins" }, tags: ["Three.js", "WebGL", "React", "Blender"], requiredRoles: ["3D Modeler", "Frontend WebGL Dev"], matchScore: 72, membersCount: 2, maxMembers: 5, deadline: "2026-12-20", difficulty: "Advanced" }
-  ],
- skillSwaps: [
- { id: "swap-1", offeredSkill: "Figma & Design Systems", offeredLevel: "Expert", requestedSkill: "Python Data Analysis", user: { name: "Priya Sharma", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150", school: "CMU", rating: 4.9, reviewsCount: 18 }, availability: "Weekends & Evenings", description: "I have 3+ years of experience designing scalable mobile apps in Figma. Want to learn Python pandas/matplotlib for data science projects!" },
- { id: "swap-2", offeredSkill: "Rust & Systems Programming", offeredLevel: "Advanced", requestedSkill: "React / Frontend Design", user: { name: "Liam O'Connor", avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=150", school: "ETH Zurich", rating: 5.0, reviewsCount: 24 }, availability: "Flexible (PST)", description: "Low-level Systems pro. Happy to teach memory safety, async Rust & WebAssembly in exchange for help polishing modern React UI interfaces." },
- { id: "swap-3", offeredSkill: "Machine Learning & PyTorch", offeredLevel: "Advanced", requestedSkill: "Full-Stack Node.js Deployment", user: { name: "Zheng Wei", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150", school: "Tsinghua / Stanford Exchange", rating: 4.8, reviewsCount: 12 }, availability: "Tuesdays & Thursdays", description: "Built & fine-tuned transformer models. Looking to master backend API architecture & Docker deployment." }
-  ],
- hackathons: [
- { id: "hack-1", title: "Global AI Student Hackathon 2026", organizer: "Major League Hacking (MLH)", prizePool: "$25,000", date: "October 24 - 26, 2026", countdownDays: 16, tags: ["AI/ML", "Open Innovation", "GenAI"], participants: 1420, openSquads: 48, banner: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=600" },
- { id: "hack-2", title: "CleanTech University Challenge", organizer: "Green Future Alliance", prizePool: "$15,000", date: "November 10 - 12, 2026", countdownDays: 32, tags: ["Sustainability", "IoT", "Web3"], participants: 890, openSquads: 29, banner: "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?auto=format&fit=crop&q=80&w=600" }
-  ],
+ currentUser: { skills: [], verifiedBadges: [], stats: { skillSwaps: 0, projectsCompleted: 0, collaborations: 0 } },
+ notifications: [],
+ projects: [],
+ skillSwaps: [],
  quizzes: [
  {
  id: "quiz-js", title: "Modern JavaScript & ES6+ Mastery", category: "Frontend Development", duration: "10 mins", questionCount: 5, badgeName: "Verified JS Pro", icon: "code",
@@ -102,17 +32,5 @@ export const INITIAL_DATA = {
  { question: "What is the main objective of creating User Personas during UX discovery?", options: ["To hire real actors for product promotional videos", "To create fictional representations of target users based on user research data", "To generate automated code templates for user logins", "To design logo variations"], correct: 1, explanation: "User personas synthesize user research findings into representative profiles that align team empathy and feature prioritization." }
   ]
  }
-  ],
- workspaceTasks: [
- { id: "task-1", title: "Design Landing Page Wireframes", assignee: "Alex Rivera", assigneeAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150", status: "done", priority: "high", tag: "UI/UX" },
- { id: "task-2", title: "Set up WebSockets Chat Gateway", assignee: "Marcus Chen", assigneeAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150", status: "in-progress", priority: "urgent", tag: "Backend" },
- { id: "task-3", title: "Train Receipt OCR Model on PyTorch", assignee: "Elena Rostova", assigneeAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150", status: "in-progress", priority: "medium", tag: "AI/ML" },
- { id: "task-4", title: "Integrate JWT Auth & Refresh Tokens", assignee: "Priya Sharma", assigneeAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150", status: "todo", priority: "high", tag: "Security" },
- { id: "task-5", title: "Draft Hackathon Submission Video Script", assignee: "Sophia Taylor", assigneeAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150", status: "todo", priority: "low", tag: "Product" }
-  ],
- workspaceMessages: [
- { id: "msg-1", sender: "Elena Rostova", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150", text: "Hey team! I just updated the dataset pipeline for EcoPulse. The accuracy hit 93.4%!", timestamp: "10:14 AM", isAi: false },
- { id: "msg-2", sender: "SkillBot (AI Assistant)", avatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=150", text: "⚡ Great milestone Elena! Suggestion: Remember to run bench tests against low-light receipt scans before demo day.", timestamp: "10:15 AM", isAi: true },
- { id: "msg-3", sender: "Marcus Chen", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150", text: "Awesome work! I will connect the API endpoints to the React frontend UI today.", timestamp: "10:18 AM", isAi: false }
   ]
 };

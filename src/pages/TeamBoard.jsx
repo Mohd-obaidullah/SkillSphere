@@ -17,6 +17,7 @@ export default function TeamBoard() {
  const [projects, setProjects] = useState([]);
  const [activeProject, setActiveProject] = useState(null);
  const [tasks, setTasks] = useState([]);
+ const [applications, setApplications] = useState([]);
  
  const [showModal, setShowModal] = useState(false);
  const [tTitle, setTTitle] = useState('');
@@ -75,6 +76,37 @@ export default function TeamBoard() {
  if (!activeProject) return;
  const res = await projectsAPI.getTasks(activeProject._id);
  setTasks(res.data);
+ };
+
+ const fetchApplications = async () => {
+ if (!activeProject || activeProject.owner_id !== myId) {
+     setApplications([]);
+     return;
+ }
+ try {
+     const res = await projectsAPI.getProjectApplications(activeProject._id);
+     setApplications(res.data);
+ } catch (e) {
+     console.error(e);
+ }
+ };
+
+ useEffect(() => {
+ fetchApplications();
+ }, [activeProject, myId]);
+
+ const handleAcceptApp = async (appId) => {
+ try {
+     await projectsAPI.acceptApplication(appId);
+     fetchApplications();
+ } catch(e) { alert("Failed to accept"); }
+ };
+ 
+ const handleRejectApp = async (appId) => {
+ try {
+     await projectsAPI.rejectApplication(appId);
+     fetchApplications();
+ } catch(e) { alert("Failed to reject"); }
  };
 
  const moveTask = async (task) => {
@@ -189,6 +221,38 @@ export default function TeamBoard() {
  </div>
  ))}
  </div>
+ {activeProject?.owner_id === myId && applications.length > 0 && (
+  <div className="mt-8 mb-8">
+  <h3 className="font-heading text-2xl font-bold mb-4">Project Applications</h3>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {applications.map(app => (
+  <div key={app._id} className="glass-card flex flex-col justify-between p-4">
+  <div className="flex items-start gap-4 mb-4">
+  <img src={app.applicant.avatar || 'https://via.placeholder.com/150'} alt="" className="w-12 h-12 rounded-full" />
+  <div>
+  <h4 className="font-bold text-lg leading-tight">{app.applicant.name}</h4>
+  <p className="text-xs text-gray-500 mb-1">{app.applicant.university}</p>
+  <div className="flex flex-wrap gap-1">
+  {(app.applicant.skills || []).map((s,i) => <span key={i} className="tag text-[10px]">{s.name}</span>)}
+  </div>
+  </div>
+  </div>
+  <div className="flex justify-between items-center mt-2 border-t pt-3">
+  <span className={`text-xs font-bold ${app.status === 'pending' ? 'text-orange-500' : app.status === 'accepted' ? 'text-green-500' : 'text-red-500'}`}>
+  STATUS: {app.status.toUpperCase()}
+  </span>
+  {app.status === 'pending' && (
+  <div className="flex gap-2">
+  <button className="btn-secondary text-xs py-1 px-3 border-red-500 text-red-500 hover:bg-red-50" onClick={() => handleRejectApp(app._id)}>Reject</button>
+  <button className="btn-primary text-xs py-1 px-3" onClick={() => handleAcceptApp(app._id)}>Accept</button>
+  </div>
+  )}
+  </div>
+  </div>
+  ))}
+  </div>
+  </div>
+ )}
  </>
  )}
 

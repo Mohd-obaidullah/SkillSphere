@@ -184,7 +184,7 @@ export default function SkillSwaps() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loading ? <p>Loading peers...</p> : peers.length === 0 ? <p className="text-gray-500">No peers found.</p> : null}
+              {loading ? <p>Loading peers...</p> : peers.length === 0 ? <p className="text-gray-500">Find students to learn and build with.</p> : null}
               {peers.map(p => (
                 <div key={p._id} className="glass-card flex flex-col justify-between">
                   <div>
@@ -312,7 +312,7 @@ export default function SkillSwaps() {
       
       {activeTab === 'active' && (
           <div>
-            {swaps.filter(s => s.status === 'active').length === 0 ? <p className="text-gray-500">No active swaps yet. Send requests from the Discover tab!</p> : (
+            {swaps.filter(s => s.status === 'active').length === 0 ? <p className="text-gray-500">Find a student to start a skill exchange.</p> : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {swaps.filter(s => s.status === 'active').map(s => {
                   const p = s.partner;

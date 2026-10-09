@@ -52,3 +52,24 @@ def delete_evidence(item_id):
         
     db.evidence.delete_one({"_id": ObjectId(item_id)})
     return jsonify({"msg": "Deleted"}), 200
+
+@evidence_bp.route('/<item_id>', methods=['PUT'])
+@jwt_required()
+def update_evidence(item_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    item = db.evidence.find_one({"_id": ObjectId(item_id)})
+    if not item or str(item['owner_id']) != str(user_id):
+        return jsonify({"msg": "Not authorized"}), 403
+        
+    update_fields = {}
+    if 'title' in data: update_fields['title'] = data['title']
+    if 'type' in data: update_fields['type'] = data['type']
+    if 'reference' in data: update_fields['reference'] = data['reference']
+    if 'skills' in data: update_fields['skills'] = data['skills']
+    
+    db.evidence.update_one({"_id": ObjectId(item_id)}, {"$set": update_fields})
+    return jsonify({"msg": "Updated"}), 200
+

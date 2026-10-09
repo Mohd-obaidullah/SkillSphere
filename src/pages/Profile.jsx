@@ -9,6 +9,7 @@ export default function Profile() {
  const [loading, setLoading] = useState(true);
  
  const [showModal, setShowModal] = useState(false);
+ const [editItemId, setEditItemId] = useState(null);
  const [eTitle, setETitle] = useState('');
  const [eRef, setERef] = useState('');
  const [eSkills, setESkills] = useState('');
@@ -28,20 +29,34 @@ export default function Profile() {
  fetchEvidence();
  }, []);
 
- const handleAddEvidence = async (e) => {
+ const handleAddOrUpdateEvidence = async (e) => {
  e.preventDefault();
  try {
- await evidenceAPI.addEvidence({
- title: eTitle,
- reference: eRef,
- skills: eSkills.split(',').map(s=>s.trim()).filter(Boolean)
- });
- setShowModal(false);
- setETitle(''); setERef(''); setESkills('');
- fetchEvidence();
+     const data = {
+         title: eTitle,
+         reference: eRef,
+         skills: eSkills.split(',').map(s=>s.trim()).filter(Boolean)
+     };
+     if (editItemId) {
+         await evidenceAPI.updateEvidence(editItemId, data);
+     } else {
+         await evidenceAPI.addEvidence(data);
+     }
+     setShowModal(false);
+     setEditItemId(null);
+     setETitle(''); setERef(''); setESkills('');
+     fetchEvidence();
  } catch (err) {
- alert("Failed to add evidence");
+     alert(`Failed to ${editItemId ? 'update' : 'add'} evidence`);
  }
+ };
+ 
+ const openEditModal = (item) => {
+     setEditItemId(item._id);
+     setETitle(item.title);
+     setERef(item.reference || '');
+     setESkills(item.skills ? item.skills.join(', ') : '');
+     setShowModal(true);
  };
 
  const handleDelete = async (id) => {
@@ -83,7 +98,11 @@ export default function Profile() {
 
  <div className="flex items-center justify-between mb-4">
  <h3 className="font-heading text-2xl font-bold">Learning Evidence</h3>
- <button className="btn-primary flex items-center gap-2 text-sm" onClick={() => setShowModal(true)}>
+ <button className="btn-primary flex items-center gap-2 text-sm" onClick={() => {
+     setEditItemId(null);
+     setETitle(''); setERef(''); setESkills('');
+     setShowModal(true);
+ }}>
  <Plus size={16} /> Add Evidence
  </button>
  </div>
@@ -106,9 +125,14 @@ export default function Profile() {
  {e.skills.map(s => <span key={s} className="tag text-[10px] bg-gray-100 text-gray-600">{s}</span>)}
  </div>
  </div>
- <button className="text-red-500 p-2 hover:bg-red-50 rounded" onClick={() => handleDelete(e._id)}>
- <Trash2 size={18} />
- </button>
+ <div className="flex gap-2">
+     <button className="text-blue-500 p-2 hover:bg-blue-50 rounded" onClick={() => openEditModal(e)}>
+         Edit
+     </button>
+     <button className="text-red-500 p-2 hover:bg-red-50 rounded" onClick={() => handleDelete(e._id)}>
+         <Trash2 size={18} />
+     </button>
+ </div>
  </div>
  ))}
  </div>
@@ -116,8 +140,8 @@ export default function Profile() {
  {showModal && (
  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
  <div className="bg-white p-6 rounded-2xl w-full max-w-md">
- <h3 className="font-bold text-xl mb-4">Add Evidence</h3>
- <form onSubmit={handleAddEvidence} className="flex flex-col gap-3">
+ <h3 className="font-bold text-xl mb-4">{editItemId ? 'Edit' : 'Add'} Evidence</h3>
+ <form onSubmit={handleAddOrUpdateEvidence} className="flex flex-col gap-3">
  <div className="form-group mb-0">
  <label>Title</label>
  <input required type="text" className="form-control" value={eTitle} onChange={e=>setETitle(e.target.value)} />
@@ -132,7 +156,7 @@ export default function Profile() {
  </div>
  <div className="flex justify-end gap-2 mt-4">
  <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
- <button type="submit" className="btn-primary">Add</button>
+ <button type="submit" className="btn-primary">{editItemId ? 'Save' : 'Add'}</button>
  </div>
  </form>
  </div>

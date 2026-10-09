@@ -147,7 +147,7 @@ export default function MainLayout() {
      </div>
      <div className="max-h-[300px] overflow-y-auto">
        {dbNotifications?.length === 0 ? (
-         <div className="p-4 text-center text-sm text-gray-500">No notifications</div>
+         <div className="p-4 text-center text-sm text-gray-500">You're all caught up.</div>
        ) : (
          dbNotifications?.map(n => (
            <div key={n._id} className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${!n.read ? 'bg-[#C85A32]/5' : ''}`} onClick={() => markAsRead(n._id)}>

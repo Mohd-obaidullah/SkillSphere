@@ -327,7 +327,7 @@ export default function StudyNotes() {
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
- {loading ? <p>Loading rooms...</p> : rooms.length === 0 ? <p className="text-gray-500">No rooms available.</p> : null}
+ {loading ? <p>Loading rooms...</p> : rooms.length === 0 ? <p className="text-gray-500">Join a study room or create one.</p> : null}
  {rooms.map(room => {
  const isMember = room.members.includes(myId);
  return (

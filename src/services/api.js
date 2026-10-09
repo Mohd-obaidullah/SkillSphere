@@ -78,6 +78,9 @@ export const projectsAPI = {
  createProject: (data) => api.post('/projects/', data),
  deleteProject: (projectId) => api.delete(`/projects/${projectId}`),
  applyProject: (projectId) => api.post(`/projects/${projectId}/apply`),
+ getProjectApplications: (projectId) => api.get(`/projects/${projectId}/applications`),
+ acceptApplication: (appId) => api.post(`/projects/applications/${appId}/accept`),
+ rejectApplication: (appId) => api.post(`/projects/applications/${appId}/reject`),
  getTasks: (projectId) => api.get(`/projects/${projectId}/tasks`),
  createTask: (projectId, data) => api.post(`/projects/${projectId}/tasks`, data),
  updateTask: (taskId, data) => api.put(`/projects/tasks/${taskId}`, data),
@@ -99,6 +102,7 @@ export const roomsAPI = {
 export const evidenceAPI = {
  getEvidence: () => api.get('/evidence/'),
  addEvidence: (data) => api.post('/evidence/', data),
+ updateEvidence: (itemId, data) => api.put(`/evidence/${itemId}`, data),
  deleteEvidence: (itemId) => api.delete(`/evidence/${itemId}`),
 };
 

@@ -34,6 +34,12 @@ def get_projects():
         p['members'] = [str(m) for m in p.get('members', [])]
         p['applicants'] = [str(a) for a in p.get('applicants', [])]
         
+        # Attach my application status if any
+        user_id = get_jwt_identity()
+        app = db.project_applications.find_one({"project_id": p['_id'], "applicant_id": ObjectId(user_id)})
+        if app:
+            p['my_application_status'] = app['status']
+
     return jsonify(projects), 200
 
 @projects_bp.route('/', methods=['POST'])
@@ -93,11 +99,118 @@ def apply_project(proj_id):
     if ObjectId(user_id) in proj.get('members', []):
         return jsonify({"msg": "Already a member"}), 400
         
-    if ObjectId(user_id) in proj.get('applicants', []):
+    existing_app = db.project_applications.find_one({
+        "project_id": str(proj_id),
+        "applicant_id": ObjectId(user_id)
+    })
+    if existing_app:
         return jsonify({"msg": "Already applied"}), 400
         
+    app_doc = {
+        "project_id": str(proj_id),
+        "applicant_id": ObjectId(user_id),
+        "owner_id": proj.get("owner_id"),
+        "status": "pending",
+        "created_at": datetime.datetime.utcnow()
+    }
+    db.project_applications.insert_one(app_doc)
+    
+    # Send notification to owner
+    applicant = db.users.find_one({"_id": ObjectId(user_id)})
+    db.notifications.insert_one({
+        "user_id": str(proj.get("owner_id")),
+        "title": "New Project Application",
+        "message": f"{applicant.get('name')} applied to your project '{proj.get('title')}'.",
+        "type": "project",
+        "read": False,
+        "created_at": datetime.datetime.utcnow()
+    })
+    
+    # Also push to legacy applicants array for backwards compatibility if any
     db.projects.update_one({"_id": ObjectId(proj_id)}, {"$push": {"applicants": ObjectId(user_id)}})
     return jsonify({"msg": "Application submitted"}), 200
+
+@projects_bp.route('/<proj_id>/applications', methods=['GET'])
+@jwt_required()
+def get_project_applications(proj_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    proj = db.projects.find_one({"_id": ObjectId(proj_id)})
+    if not proj: return jsonify({"msg": "Project not found"}), 404
+    if str(proj.get("owner_id")) != user_id:
+        return jsonify({"msg": "Not authorized"}), 403
+        
+    applications = list(db.project_applications.find({"project_id": str(proj_id)}))
+    for app in applications:
+        app['_id'] = str(app['_id'])
+        app['applicant_id'] = str(app['applicant_id'])
+        app['owner_id'] = str(app['owner_id'])
+        # Embed applicant info
+        applicant = db.users.find_one({"_id": ObjectId(app['applicant_id'])})
+        if applicant:
+            app['applicant'] = {
+                "name": applicant.get("name"),
+                "avatar": applicant.get("avatar"),
+                "university": applicant.get("university"),
+                "skills": applicant.get("skills", []),
+                "bio": applicant.get("bio")
+            }
+    return jsonify(applications), 200
+
+@projects_bp.route('/applications/<app_id>/accept', methods=['POST'])
+@jwt_required()
+def accept_application(app_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    app = db.project_applications.find_one({"_id": ObjectId(app_id)})
+    if not app: return jsonify({"msg": "Application not found"}), 404
+    if str(app.get("owner_id")) != user_id: return jsonify({"msg": "Not authorized"}), 403
+    if app.get("status") != "pending": return jsonify({"msg": "Already processed"}), 400
+    
+    db.project_applications.update_one({"_id": ObjectId(app_id)}, {"$set": {"status": "accepted"}})
+    db.projects.update_one(
+        {"_id": ObjectId(app['project_id'])}, 
+        {"$addToSet": {"members": ObjectId(app['applicant_id'])}}
+    )
+    
+    proj = db.projects.find_one({"_id": ObjectId(app['project_id'])})
+    db.notifications.insert_one({
+        "user_id": str(app['applicant_id']),
+        "title": "Application Accepted",
+        "message": f"You were accepted into the project '{proj.get('title')}'.",
+        "type": "project",
+        "read": False,
+        "created_at": datetime.datetime.utcnow()
+    })
+    
+    return jsonify({"msg": "Accepted"}), 200
+
+@projects_bp.route('/applications/<app_id>/reject', methods=['POST'])
+@jwt_required()
+def reject_application(app_id):
+    db = get_db()
+    user_id = get_jwt_identity()
+    
+    app = db.project_applications.find_one({"_id": ObjectId(app_id)})
+    if not app: return jsonify({"msg": "Application not found"}), 404
+    if str(app.get("owner_id")) != user_id: return jsonify({"msg": "Not authorized"}), 403
+    if app.get("status") != "pending": return jsonify({"msg": "Already processed"}), 400
+    
+    db.project_applications.update_one({"_id": ObjectId(app_id)}, {"$set": {"status": "rejected"}})
+    
+    proj = db.projects.find_one({"_id": ObjectId(app['project_id'])})
+    db.notifications.insert_one({
+        "user_id": str(app['applicant_id']),
+        "title": "Application Update",
+        "message": f"Your application to '{proj.get('title')}' was not accepted.",
+        "type": "project",
+        "read": False,
+        "created_at": datetime.datetime.utcnow()
+    })
+    
+    return jsonify({"msg": "Rejected"}), 200
 
 @projects_bp.route('/<proj_id>/tasks', methods=['GET'])
 @jwt_required()

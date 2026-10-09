@@ -135,12 +135,13 @@ export default function Projects() {
  {loading ? (
  <div className="col-span-full text-center py-12 text-gray-500">Loading projects...</div>
  ) : displayedProjects.length === 0 ? (
- <div className="col-span-full text-center py-12 text-gray-500">No projects found.</div>
+ <div className="col-span-full text-center py-12 text-gray-500">No projects yet. Create your first project.</div>
  ) : (
  displayedProjects.map(p => {
  const isOwner = p.owner_id === myId;
  const isMember = p.members.includes(myId);
- const hasApplied = p.applicants.includes(myId);
+ const myAppStatus = p.my_application_status;
+ const hasApplied = myAppStatus === 'pending' || (p.applicants && p.applicants.includes(myId));
  const isBookmarked = savedIds.includes(p._id);
  return (
  <div key={p._id} className="glass-card flex flex-col justify-between">
@@ -177,11 +178,14 @@ export default function Projects() {
  <span className="text-[10px] text-gray-500">{p.owner.school}</span>
  </div>
  </div>
- {!isOwner && !isMember && !hasApplied && (
+ {!isOwner && !isMember && !hasApplied && myAppStatus !== 'rejected' && (
  <button className="btn-primary text-xs py-1.5 px-3" onClick={() => applyToProject(p)}>Join Team</button>
  )}
  {!isOwner && !isMember && hasApplied && (
  <span className="text-xs font-semibold text-gray-500">Applied</span>
+ )}
+ {!isOwner && !isMember && myAppStatus === 'rejected' && (
+ <span className="text-xs font-semibold text-red-500">Rejected</span>
  )}
  {isMember && !isOwner && (
  <span className="text-xs font-semibold text-green-500">Member</span>
