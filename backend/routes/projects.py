@@ -31,7 +31,9 @@ def get_projects():
             "school": owner.get("university")
         }
         # Serialize ObjectIds in members and applicants
-        p['members'] = [str(m) for m in p.get('members', [])]
+        member_ids = [ObjectId(m) for m in p.get('members', [])]
+        members_data = list(db.users.find({"_id": {"$in": member_ids}}, {"name": 1, "avatar": 1}))
+        p['members'] = [{"_id": str(m["_id"]), "name": m.get("name"), "avatar": m.get("avatar")} for m in members_data]
         p['applicants'] = [str(a) for a in p.get('applicants', [])]
         
         # Attach my application status if any
@@ -39,6 +41,12 @@ def get_projects():
         app = db.project_applications.find_one({"project_id": p['_id'], "applicant_id": ObjectId(user_id)})
         if app:
             p['my_application_status'] = app['status']
+            
+        # Attach room_id if member
+        if any(m["_id"] == str(user_id) for m in p['members']):
+            room = db.rooms.find_one({"project_id": str(p['_id'])})
+            if room:
+                p['room_id'] = str(room['_id'])
 
     return jsonify(projects), 200
 
@@ -85,6 +93,13 @@ def delete_project(proj_id):
         
     db.projects.delete_one({"_id": ObjectId(proj_id)})
     db.tasks.delete_many({"project_id": ObjectId(proj_id)})
+    
+    room = db.rooms.find_one({"project_id": str(proj_id)})
+    if room:
+        db.rooms.delete_one({"_id": room["_id"]})
+        db.discussions.delete_many({"room_id": room["_id"]})
+        db.files.delete_many({"room_id": room["_id"]})
+        
     return jsonify({"msg": "Project deleted successfully"}), 200
 
 @projects_bp.route('/<proj_id>/apply', methods=['POST'])
@@ -113,7 +128,7 @@ def apply_project(proj_id):
         "status": "pending",
         "created_at": datetime.datetime.utcnow()
     }
-    db.project_applications.insert_one(app_doc)
+    res = db.project_applications.insert_one(app_doc)
     
     # Send notification to owner
     applicant = db.users.find_one({"_id": ObjectId(user_id)})
@@ -121,7 +136,9 @@ def apply_project(proj_id):
         "user_id": str(proj.get("owner_id")),
         "title": "New Project Application",
         "message": f"{applicant.get('name')} applied to your project '{proj.get('title')}'.",
-        "type": "project",
+        "type": "project_application",
+        "related_id": str(res.inserted_id),
+        "project_id": str(proj_id),
         "read": False,
         "created_at": datetime.datetime.utcnow()
     })
@@ -176,6 +193,27 @@ def accept_application(app_id):
     )
     
     proj = db.projects.find_one({"_id": ObjectId(app['project_id'])})
+    
+    # Ensure room exists for this project
+    room = db.rooms.find_one({"project_id": str(proj['_id'])})
+    if not room:
+        room_doc = {
+            "title": proj.get("title") + " - Team Room",
+            "description": proj.get("description", ""),
+            "subject": "Project",
+            "project_id": str(proj['_id']),
+            "owner_id": proj.get("owner_id"),
+            "members": [proj.get("owner_id"), ObjectId(app['applicant_id'])],
+            "created_at": datetime.datetime.utcnow(),
+            "active": True
+        }
+        db.rooms.insert_one(room_doc)
+    else:
+        db.rooms.update_one(
+            {"_id": room["_id"]},
+            {"$addToSet": {"members": ObjectId(app['applicant_id'])}}
+        )
+    
     db.notifications.insert_one({
         "user_id": str(app['applicant_id']),
         "title": "Application Accepted",

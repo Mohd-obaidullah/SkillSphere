@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { roomsAPI, storageAPI } from '../services/api';
 import { useAppContext } from '../context/AppContext';
 import { Users, FileText, MessageSquare, Download, Plus, Bot, Share } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 export default function StudyNotes() {
  const { state } = useAppContext();
+ const [searchParams, setSearchParams] = useSearchParams();
  const [rooms, setRooms] = useState([]);
  const [loading, setLoading] = useState(true);
  
@@ -39,6 +41,11 @@ export default function StudyNotes() {
  try {
  const res = await roomsAPI.getRooms();
  setRooms(res.data);
+ const urlRoomId = searchParams.get('room');
+ if (urlRoomId) {
+     const found = res.data.find(r => r._id === urlRoomId);
+     if (found) setActiveRoom(found);
+ }
  } catch (e) {
  console.error(e);
  } finally {
@@ -48,7 +55,7 @@ export default function StudyNotes() {
 
  useEffect(() => {
  fetchRooms();
- }, []);
+ }, [searchParams]);
 
  const handleCreateRoom = async (e) => {
  e.preventDefault();
@@ -169,9 +176,16 @@ export default function StudyNotes() {
         {toast.msg}
     </div>
  )}
- <button className="text-gray-500 hover:text-black mb-4 flex items-center gap-1" onClick={() => setActiveRoom(null)}>
+ <div className="flex items-center gap-4 mb-4">
+ <button className="text-gray-500 hover:text-black flex items-center gap-1" onClick={() => { setActiveRoom(null); setSearchParams({}); }}>
  &larr; Back to Rooms
  </button>
+ {activeRoom.project_id && (
+    <a href={`/team-board?project=${activeRoom.project_id}`} className="text-[#C85A32] hover:underline flex items-center gap-1 text-sm font-bold">
+        Open Project Workspace &rarr;
+    </a>
+ )}
+ </div>
  <div className="flex justify-between items-start mb-6">
  <div>
  <h2 className="font-heading text-3xl font-extrabold">{activeRoom.title}</h2>

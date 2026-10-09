@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { projectsAPI } from '../services/api';
-import { Plus } from 'lucide-react';
+import { Plus, Users, MessageSquare } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export default function TeamBoard() {
  const { state } = useAppContext();
+ const [searchParams] = useSearchParams();
+ const navigate = useNavigate();
+
  const [timerOn, setTimerOn] = useState(false);
  const defaultTimerSettings = { focus: 25, shortBreak: 5, longBreak: 15, sessionsBeforeLong: 4 };
  const userSettings = state.currentUser?.timer_settings || defaultTimerSettings;
@@ -58,11 +62,18 @@ export default function TeamBoard() {
  // Fetch projects I am a member of
  useEffect(() => {
  projectsAPI.getProjects().then(res => {
- const myProjects = res.data.filter(p => p.members.includes(myId));
+ const myProjects = res.data.filter(p => p.members.some(m => m._id === myId));
  setProjects(myProjects);
- if (myProjects.length > 0) setActiveProject(myProjects[0]);
+ const urlProject = searchParams.get('project');
+ if (urlProject) {
+     const found = myProjects.find(p => p._id === urlProject);
+     if (found) setActiveProject(found);
+     else if (myProjects.length > 0) setActiveProject(myProjects[0]);
+ } else if (myProjects.length > 0) {
+     setActiveProject(myProjects[0]);
+ }
  });
- }, [myId]);
+ }, [myId, searchParams]);
 
  // Fetch tasks for active project
  useEffect(() => {
@@ -157,19 +168,29 @@ export default function TeamBoard() {
  <div className="animate-[fadeIn_0.35s_ease-out_forwards]">
  <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
  <div>
- <h2 className="font-heading text-3xl font-extrabold mb-1">Team Board & Timer</h2>
+ <h2 className="font-heading text-3xl font-extrabold mb-1">Project Workspace</h2>
  <p className="text-gray-500 text-sm">Manage tasks for your projects and stay focused.</p>
  </div>
  
+ <div className="flex gap-4 items-center">
+ {activeProject?.room_id && (
+    <a href={`/study-notes?room=${activeProject.room_id}`} className="btn-secondary whitespace-nowrap text-sm py-1.5 px-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200 flex items-center gap-2">
+      <MessageSquare size={16} /> Discussions & Resources
+    </a>
+ )}
  {projects.length > 0 && (
  <select 
  className="form-control mb-0 w-auto min-w-[200px]"
  value={activeProject ? activeProject._id : ''}
- onChange={e => setActiveProject(projects.find(p => p._id === e.target.value))}
+ onChange={e => {
+    setActiveProject(projects.find(p => p._id === e.target.value));
+    navigate(`/team-board?project=${e.target.value}`);
+ }}
  >
  {projects.map(p => <option key={p._id} value={p._id}>{p.title}</option>)}
  </select>
  )}
+ </div>
  </div>
 
  <div className="glass-card mb-8 text-center max-w-sm mx-auto relative">

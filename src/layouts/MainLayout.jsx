@@ -46,6 +46,14 @@ export default function MainLayout() {
    };
  }, []);
 
+ const handleNotifClick = async (n) => {
+   if (!n.read) await markAsRead(n._id);
+   if (n.type === 'project_application') {
+     navigate(`/projects?app_id=${n.related_id}&project_id=${n.project_id}`);
+     setShowNotifs(false);
+   }
+ };
+
  const markAsRead = async (notifId) => {
    try {
      await notificationsAPI.markAsRead(notifId);
@@ -150,7 +158,7 @@ export default function MainLayout() {
          <div className="p-4 text-center text-sm text-gray-500">You're all caught up.</div>
        ) : (
          dbNotifications?.map(n => (
-           <div key={n._id} className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${!n.read ? 'bg-[#C85A32]/5' : ''}`} onClick={() => markAsRead(n._id)}>
+           <div key={n._id} className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${!n.read ? 'bg-[#C85A32]/5' : ''}`} onClick={() => handleNotifClick(n)}>
              <div className="flex justify-between items-start mb-1">
                <span className="font-semibold text-sm leading-tight">{n.title}</span>
                {!n.read && <div className="w-2 h-2 rounded-full bg-[#C85A32] mt-1 shrink-0" />}
