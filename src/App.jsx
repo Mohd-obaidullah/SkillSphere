@@ -29,7 +29,7 @@ export default function App() {
  <Route path="/resources" element={<StudyNotes />} />
  <Route path="/events" element={<Events />} />
  <Route path="/quizzes" element={<Quizzes />} />
- <Route path="/workspace" element={<TeamBoard />} />
+ <Route path="/team-board" element={<TeamBoard />} />
  <Route path="/profile" element={<Profile />} />
  <Route path="/settings" element={<Settings />} />
  <Route path="*" element={<Navigate to="/" replace />} />
