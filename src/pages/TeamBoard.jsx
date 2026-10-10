@@ -15,7 +15,7 @@ export default function TeamBoard() {
  const [activeProject, setActiveProject] = useState(null);
  const [tasks, setTasks] = useState([]);
  const [applications, setApplications] = useState([]);
- const [activeTab, setActiveTab] = useState('board'); // overview, board, discussion
+ const [activeTab, setActiveTab] = useState('board');
  const [questions, setQuestions] = useState([]);
  const [newQuestion, setNewQuestion] = useState('');
  
@@ -29,7 +29,7 @@ export default function TeamBoard() {
 
  const myId = state.currentUser._id;
 
- // Fetch projects I am a member of
+ // Fetch projects the current user is a member of
  useEffect(() => {
  projectsAPI.getProjects().then(res => {
  const myProjects = res.data.filter(p => p.members.some(m => m._id === myId));
@@ -54,7 +54,7 @@ export default function TeamBoard() {
  });
  }, [myId, searchParams]);
 
- // Fetch tasks for active project
+ // Fetch tasks for the selected project
  useEffect(() => {
  if (!activeProject) return;
  projectsAPI.getTasks(activeProject._id).then(res => {
@@ -103,7 +103,7 @@ export default function TeamBoard() {
  const map = { "todo": "in-progress", "in-progress": "done", "done": "todo" };
  const nextStatus = map[task.status] || "todo";
  
- // optimistic update
+ // Update local state optimistically
  setTasks(tasks.map(t => t._id === task._id ? { ...t, status: nextStatus } : t));
  
  try {

@@ -20,7 +20,7 @@ def get_projects():
         ]
     projects = list(db.projects.find(query))
     
-    # Embed owner info
+    # Enrich project data with owner details
     for p in projects:
         p['_id'] = str(p['_id'])
         p['owner_id'] = str(p['owner_id'])
@@ -30,19 +30,19 @@ def get_projects():
             "avatar": owner.get("avatar"),
             "school": owner.get("university")
         }
-        # Serialize ObjectIds in members and applicants
+        # Fetch and format member details
         member_ids = [ObjectId(m) for m in p.get('members', [])]
         members_data = list(db.users.find({"_id": {"$in": member_ids}}, {"name": 1, "avatar": 1}))
         p['members'] = [{"_id": str(m["_id"]), "name": m.get("name"), "avatar": m.get("avatar")} for m in members_data]
         p['applicants'] = [str(a) for a in p.get('applicants', [])]
         
-        # Attach my application status if any
+        # Include the current user's application status
         user_id = get_jwt_identity()
         app = db.project_applications.find_one({"project_id": p['_id'], "applicant_id": ObjectId(user_id)})
         if app:
             p['my_application_status'] = app['status']
             
-        # Attach room_id if member
+        # Ensure a discussion room exists and attach its ID
         if any(m["_id"] == str(user_id) for m in p['members']):
             room = db.rooms.find_one({"project_id": str(p['_id'])})
             if not room:
@@ -177,7 +177,7 @@ def apply_project(proj_id):
         "created_at": datetime.datetime.utcnow()
     })
     
-    # Also push to legacy applicants array for backwards compatibility if any
+    # Maintain legacy applicants array for backward compatibility
     db.projects.update_one({"_id": ObjectId(proj_id)}, {"$push": {"applicants": ObjectId(user_id)}})
     return jsonify({"msg": "Application submitted"}), 200
 
@@ -197,7 +197,7 @@ def get_project_applications(proj_id):
         app['_id'] = str(app['_id'])
         app['applicant_id'] = str(app['applicant_id'])
         app['owner_id'] = str(app['owner_id'])
-        # Embed applicant info
+        # Enrich application data with applicant details
         applicant = db.users.find_one({"_id": ObjectId(app['applicant_id'])})
         if applicant:
             app['applicant'] = {
@@ -318,7 +318,7 @@ def create_task(proj_id):
         "status": data.get('status', 'todo'),
         "priority": data.get('priority', 'medium'),
         "tag": data.get('tag', ''),
-        "assignee_id": ObjectId(user_id), # Default to creator for now
+        "assignee_id": ObjectId(user_id),
         "created_at": datetime.datetime.utcnow()
     }
     
@@ -359,7 +359,7 @@ def delete_task(task_id):
     task = db.tasks.find_one({"_id": ObjectId(task_id)})
     if not task: return jsonify({"msg": "Task not found"}), 404
     
-    # Task can be deleted if user is assignee or project owner
+    # Authorize deletion only for the assignee or the project owner
     proj = db.projects.find_one({"_id": task['project_id']})
     is_owner = proj and str(proj.get('owner_id')) == user_id
     is_assignee = str(task.get('assignee_id')) == user_id

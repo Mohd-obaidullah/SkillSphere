@@ -7,7 +7,7 @@ export default function SkillSwaps() {
   const { state } = useAppContext();
   const currentUser = state.currentUser;
   
-  const [activeTab, setActiveTab] = useState('discover'); // discover, incoming, sent, active, completed
+  const [activeTab, setActiveTab] = useState('discover');
   
   const [peers, setPeers] = useState([]);
   const [search, setSearch] = useState('');
@@ -19,14 +19,12 @@ export default function SkillSwaps() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [selectedPeer, setSelectedPeer] = useState(null);
   const [teachSkills, setTeachSkills] = useState([]);
   const [learnSkills, setLearnSkills] = useState([]);
   const [swapMessage, setSwapMessage] = useState('');
   
-  // Active Swap Modal
   const [activeSwap, setActiveSwap] = useState(null);
   const [sessionNotes, setSessionNotes] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -116,7 +114,7 @@ export default function SkillSwaps() {
     }
   };
   
-  // Polling for active swap
+  // Poll the server periodically to keep active swap data fresh
   useEffect(() => {
     let intervalId;
     if (activeSwap) {
@@ -156,7 +154,7 @@ export default function SkillSwaps() {
       try {
           const res = await swapsAPI.addSession(activeSwap._id, { notes: sessionNotes });
           setSessionNotes('');
-          // Update local activeSwap state immediately
+          // Update local state optimistically
           setActiveSwap(prev => ({
               ...prev,
               sessions: [...(prev.sessions || []), res.data]
